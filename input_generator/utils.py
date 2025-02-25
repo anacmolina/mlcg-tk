@@ -13,7 +13,7 @@ from aggforce import (LinearMap,
 
 
 from .prior_gen import PriorBuilder
-
+from .lipid_mapping_dicts import (LIPID_BONDS,LIPID_MAPPINGS,LIPID_MASSES)
 
 def with_attrs(**func_attrs):
     """Set attributes in the decorated function, at definition time.
@@ -436,3 +436,40 @@ def get_dihedral_groups(
             atom_groups[label].append(np.concatenate(dihedral))
 
     return atom_groups
+
+
+
+
+
+#Funcion de DanieL. R
+def add_bonds_to_cg_topology(cg_top: md.Topology):
+    """
+    Parameters
+    ----------
+    cg_top:
+        MDTraj topology object of CG topology.
+
+    Returns
+    -------
+    MDTraj topology object with bonds added.
+    """
+    # add bonds to CG topology
+    for residue in cg_top.residues:
+        res_atoms = [a for a in residue.atoms]
+        for bond in LIPID_BONDS[residue.name]:
+            cg_top.add_bond(res_atoms[bond[0]], res_atoms[bond[1]])
+    return cg_top       
+
+def normalize_to_one(numbers):
+    total = sum(numbers)
+    if total == 0:
+        raise ValueError("Sum of the input list is zero, cannot normalize.")
+    
+    # Normalize the numbers
+    normalized = [x / total for x in numbers]
+    
+    # Adjust the last element to account for floating-point inaccuracies
+    correction = 1 - sum(normalized)
+    normalized[-1] += correction
+    
+    return normalized

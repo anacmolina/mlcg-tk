@@ -23,6 +23,7 @@ from .utils import (
 )
 from .prior_gen import PriorBuilder
 
+from .lipid_mapping_dicts import (LIPID_BONDS,LIPID_MAPPINGS,LIPID_MASSES)
 
 def get_strides(n_structure: int, batch_size: int):
     """
