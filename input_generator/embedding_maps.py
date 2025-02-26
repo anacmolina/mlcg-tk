@@ -1,5 +1,7 @@
 from typing import Dict
 
+
+
 embedding_map_fivebead = {
     "ALA": 1,
     "CYS": 2,
@@ -92,6 +94,57 @@ def embedding_fivebead(atom_df):
             atom_type = embedding_map_fivebead[name]
     elif name == "CB":
         atom_type = embedding_map_fivebead[res]
+    else:
+        print(f"Unknown atom name given: {name}")
+        atom_type = "NA"
+    return atom_type
+
+
+
+
+
+
+embedding_map_lipids_martini = {
+    "NC3":  1, #La cambio a NC3
+    "PO4":  2,
+    "GL1":  3,
+    "GL2":  4,
+    "C1A":  5,
+    "C2A":  6,
+    "C3A":  7,
+    "C4A":  8,
+    "C1B":  9,
+    "C2B":  10,
+    "C3B":  11,
+    "C4B":  12,
+    #Added for POPC
+    "D2A": 14
+}
+
+
+
+
+
+
+class CGEmbeddingMapLipidsMartini(CGEmbeddingMap):
+    """
+    Simple lipids embedding map defined by:
+        - P : phosphate group
+    """
+
+    def __init__(self):
+        super().__init__(embedding_map_lipids_martini)
+
+
+def embedding_lipids_martini(atom_df):
+    """
+    Helper function for mapping high-resolution topology to 5-bead embedding map.
+    """
+    name, res = atom_df["name"], atom_df["resName"]
+    if name == "NC3":
+        atom_type = embedding_map_lipids_martini[res]
+    elif name in ["PO4", "GL1", "GL2", "C1A", "C2A", "C3A", "C4A", "C1B", "C2B", "C3B", "C4B"]:
+        atom_type = embedding_map_lipids_martini[name]
     else:
         print(f"Unknown atom name given: {name}")
         atom_type = "NA"
