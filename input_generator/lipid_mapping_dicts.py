@@ -27,7 +27,7 @@ LIPID_MAPPINGS = {
                 'C2B'  : ['C36', 'H6Y', 'H6X', 'C37', 'H7Y', 'H7X', 'C38', 'H8Y', 'H8X', 'C39', 'H9Y', 'H9X'],
                 'C3B'  : ['C310', 'H10Y', 'H10X', 'C311', 'H11Y', 'H11X', 'C312', 'H12Y', 'H12X', 'C313', 'H13Y', 'H13X'],
                 'C4B'  : ['C314', 'H14Y', 'H14X', 'C315', 'H15Y', 'H15X', 'C316', 'H16Y', 'H16X', 'H16Z'],
-        } # Respecto a DR, solo cambia el D2A y el C3A, que pasan de tener H9R/S a H91 y H10S/R a H101
+        } # Regarding DR, only the D2A and C3A change from H9R/S to H91 and H10S/R to H101.
 }
 
 LIPID_BONDS = {

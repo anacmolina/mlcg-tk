@@ -441,7 +441,7 @@ def get_dihedral_groups(
 
 
 
-#Funcion de DanieL. R
+#Daniel. R new function
 def add_bonds_to_cg_topology(cg_top: md.Topology):
     """
     Parameters
