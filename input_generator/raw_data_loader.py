@@ -1231,30 +1231,30 @@ class Lipids_loader(DatasetLoader):
     
     
     def generate_data(self, traj_dirs: list) -> Generator[Tuple[np.ndarray, np.ndarray], None, None]:
-    """
-    Generates coordinate and force data from trajectory directories.
+        r"""
+        Generates coordinate and force data from trajectory directories.
 
-    Parameters
-    ----------
-    traj_dirs : list
-        A list of trajectory directory paths.
+        Parameters
+        ----------
+        traj_dirs : list
+            A list of trajectory directory paths.
 
-    Yields
-    ------
-    Tuple[np.ndarray, np.ndarray]
-        Coordinates and forces extracted from each trajectory file.
-    """
-    for traj_dir in traj_dirs:
-        file_paths = glob(os.path.join(traj_dir, "production_full_output/*.npz"))
-        for file_path in file_paths:
-            data = np.load(file_path, allow_pickle=True)
-            coords = data["coords"].astype(np.float32)
-            forces = data["Fs"].astype(np.float32)
-            
-            if coords.shape != forces.shape:
-                raise ValueError("Mismatch in shapes of coordinates and forces")
-            
-            yield coords, forces
+        Yields
+        ------
+        Tuple[np.ndarray, np.ndarray]
+            Coordinates and forces extracted from each trajectory file.
+        """
+        for traj_dir in traj_dirs:
+            file_paths = glob(os.path.join(traj_dir, "production_full_output/*.npz"))
+            for file_path in file_paths:
+                data = np.load(file_path, allow_pickle=True)
+                coords = data["coords"].astype(np.float32)
+                forces = data["Fs"].astype(np.float32)
+                
+                if coords.shape != forces.shape:
+                    raise ValueError("Mismatch in shapes of coordinates and forces")
+                
+                yield coords, forces
             
     def load_coords_forces_npz(self, base_dir: str, name: str) -> Generator[Tuple[np.ndarray, np.ndarray], None, None]:
         """
