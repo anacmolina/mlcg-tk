@@ -125,26 +125,9 @@ def embedding_ca(atom_df):
     return atom_type
 
 
-def embedding_ca(atom_df):
-    """
-    Helper function for mapping high-resolution topology to
-    CA embedding map.
-    """
-    name, res = atom_df["name"], atom_df["resName"]
-    if name == "CA":
-        atom_type = embedding_map_fivebead[res]
-    else:
-        print(f"Unknown atom name given: {name}")
-        atom_type = "NA"
-    return atom_type
-
-
-
-
-
 
 embedding_map_lipids_martini = {
-    "NC3":  1, #La cambio a NC3
+    "NC3":  1, 
     "PO4":  2,
     "GL1":  3,
     "GL2":  4,
@@ -156,8 +139,7 @@ embedding_map_lipids_martini = {
     "C2B":  10,
     "C3B":  11,
     "C4B":  12,
-    #Added for POPC
-    "D2A": 14
+    "D2A": 14,
 }
 
 
