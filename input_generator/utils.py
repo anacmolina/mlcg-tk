@@ -312,7 +312,7 @@ def slice_coord_forces(
         cg_coords = cg_matmul(coords,config_map_matrix)
         cg_forces = cg_matmul(forces,force_map_matrix)
 
-    return cg_coords, cg_forces, force_map_matrix
+    return cg_coords, cg_forces, config_map_matrix, force_map_matrix
 
 
 def filter_cis_frames(
