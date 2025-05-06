@@ -94,7 +94,7 @@ def process_sim_input(
 
         cg_trajs = samples.input_traj.atom_slice(samples.cg_atom_indices)
         cg_masses = (
-            np.array([int(atom.element.mass) for atom in cg_trajs[0].topology.atoms])
+            np.array([atom.element.mass for atom in cg_trajs[0].topology.atoms])
             / mass_scale
         )
         prior_nls = samples.get_prior_nls(
@@ -125,7 +125,10 @@ def process_sim_input(
         data.neighbor_list = deepcopy(nls)
         data_list.append(data)
 
-    torch.save(data_list, f"{save_dir}{get_output_tag([dataset_name, tag], placement='before')}configurations.pt")
+    torch.save(
+        data_list,
+        f"{save_dir}{get_output_tag([dataset_name, tag], placement='before')}configurations.pt",
+    )
 
 
 if __name__ == "__main__":
