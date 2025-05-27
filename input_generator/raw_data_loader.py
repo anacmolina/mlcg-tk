@@ -1198,7 +1198,7 @@ class WRC_loader(DatasetLoader):
             base_dir: str,
             name: str,
             stride: int = 1,
-            batch: Optional[int] = None,
+            batch: Optional[int] = 10000,
             n_batches: Optional[int] = 1,
     )-> Tuple[np.ndarray, np.ndarray]:
         """
@@ -1224,37 +1224,41 @@ class WRC_loader(DatasetLoader):
         #        "Please set n_batches to 1."
         #    )
         
-        coords_files = np.array(sorted(glob(f"{base_dir}/{name}-coords*")))
-        forces_files = np.array(sorted(glob(f"{base_dir}/{name}-forces*")))
+        coords_fns = np.array(sorted(glob(f"{base_dir}/{name}-replica1-coords*")))[:2]
+        forces_fns = np.array(sorted(glob(f"{base_dir}/{name}-replica1-forces*")))[:2]
 
-        assert len(coords_files) == len(forces_files), \
-            f"Number of coordinates files ({len(coords_files)}) does not match number of forces files ({len(forces_files)})"
+        print(f"Coordinates files: {coords_fns}")
+        print(f"Forces files: {forces_fns}")
 
-        #Load coordinates
+        assert len(coords_fns) == len(forces_fns), \
+            f"Number of coordinates files ({len(coords_fns)}) does not match number of forces files ({len(forces_fns)})"
 
-        if n_batches > 1:
-            assert batch is not None, "batch id must be set if more than 1 batch"
-            chunk_ids = chunker(
-                [i for i in range(len(coords_fns))], n_batches=n_batches
-            )
-            coords_fns = coords_fns[np.array(chunk_ids[batch])]
-            forces_fns = forces_fns[np.array(chunk_ids[batch])]
+        ##Load coordinates
+        print(f'N batches: {n_batches} Batch: {batch}')
+        #if n_batches > 1:
+        #    assert batch is not None, "batch id must be set if more than 1 batch"
+        #    chunk_ids = chunker(
+        #        [i for i in range(len(coords_fns))], n_batches=n_batches
+        #    )
+        #    coords_fns = coords_fns[np.array(chunk_ids[batch])]
+        #    forces_fns = forces_fns[np.array(chunk_ids[batch])]
 
-        aa_coords = []
-        aa_forces = []
+        aa_coords_list = []
+        aa_forces_list = []
 
-        for coords_file, forces_file in tqdm(zip(coords_files, forces_files), total=len(coords_files)):
-            coords = np.load(coords_file)
-            forces = np.load(forces_file)
+        for coords_fn, forces_fn in tqdm(zip(coords_fns, forces_fns), total=len(coords_fns)):
+            coords = np.load(coords_fn)
+            forces = np.load(forces_fn)
 
+            assert coords.shape == forces.shape
             coords = coords[::stride]
             forces = forces[::stride]
 
-            aa_coords.append(coords)
-            aa_forces.append(forces)
+            aa_coords_list.append(coords)
+            aa_forces_list.append(forces)
 
-        aa_coords = np.vstack(aa_coords)
-        aa_forces = np.vstack(aa_forces)
+        aa_coords = np.concatenate(aa_coords_list) * 10  # Convert to angstrom
+        aa_forces = np.concatenate(aa_forces_list) / 41.84# Convert to kcal/mol/angstrom
         
         print(f"Coordinates file: {aa_coords.shape}")
         print(f"Forces file: {aa_forces.shape}")
