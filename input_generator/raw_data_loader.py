@@ -1166,3 +1166,97 @@ class SimInput_loader(DatasetLoader):
         )
         top_dataframe = input_traj.topology.to_dataframe()[0]
         return input_traj, top_dataframe
+
+
+class WRC_loader(DatasetLoader):
+    """TODO: Description"""
+
+    def get_traj_top(self, name: str, pdb_fn: str):
+
+        """
+        For a given WRC, return a loaded MDTraj object at the input resolution 
+        (atomistic in general) as well as the dataframe associated with its topology.
+        
+        Parameters
+        ----------
+        name : str
+            Name of the WRC.
+        pdb_fn : str
+            Path to the structure PDB file.
+        """
+
+        pdb = md.load(pdb_fn.format(name))
+        aa_traj = pdb.atom_slice(
+            [a.index for a in pdb.topology.atoms if a.residue.is_protein]
+        )
+        top_dataframe = aa_traj.topology.to_dataframe()[0]
+
+        return aa_traj, top_dataframe
+    
+    def load_coords_forces(
+            self,
+            base_dir: str,
+            name: str,
+            stride: int = 1,
+            batch: Optional[int] = None,
+            n_batches: Optional[int] = 1,
+    )-> Tuple[np.ndarray, np.ndarray]:
+        """
+        For a given WRC name, return the np.ndarray of coordinates and forces at input resolution.
+
+        Parameters
+        ----------
+        base_dir : str
+            Base directory where the WRC data (coordinates and forces) is stored.
+        name : str
+            Name of the WRC.
+        stride : int, optional
+            Interval at which to sample frames from the trajectory, by default 1.
+        batch : Optional[int] or None
+            If the data is loaded in batches, this specifies the batch number to load.
+        n_batches : Optional[int] or None
+            If n_batches is greater than 1, divide the total trajectory to load into n_batches chunks.
+        """
+
+        #if n_batches>1:
+        #    raise NotImplementedError(
+        #        "Loading in batches is not implemented for WRC_loader. "
+        #        "Please set n_batches to 1."
+        #    )
+        
+        coords_files = np.array(sorted(glob(f"{base_dir}/{name}-coords*")))
+        forces_files = np.array(sorted(glob(f"{base_dir}/{name}-forces*")))
+
+        assert len(coords_files) == len(forces_files), \
+            f"Number of coordinates files ({len(coords_files)}) does not match number of forces files ({len(forces_files)})"
+
+        #Load coordinates
+
+        if n_batches > 1:
+            assert batch is not None, "batch id must be set if more than 1 batch"
+            chunk_ids = chunker(
+                [i for i in range(len(coords_fns))], n_batches=n_batches
+            )
+            coords_fns = coords_fns[np.array(chunk_ids[batch])]
+            forces_fns = forces_fns[np.array(chunk_ids[batch])]
+
+        aa_coords = []
+        aa_forces = []
+
+        for coords_file, forces_file in tqdm(zip(coords_files, forces_files), total=len(coords_files)):
+            coords = np.load(coords_file)
+            forces = np.load(forces_file)
+
+            coords = coords[::stride]
+            forces = forces[::stride]
+
+            aa_coords.append(coords)
+            aa_forces.append(forces)
+
+        aa_coords = np.vstack(aa_coords)
+        aa_forces = np.vstack(aa_forces)
+        
+        print(f"Coordinates file: {aa_coords.shape}")
+        print(f"Forces file: {aa_forces.shape}")
+
+        return aa_coords, aa_forces
