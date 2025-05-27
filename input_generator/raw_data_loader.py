@@ -1198,7 +1198,7 @@ class WRC_loader(DatasetLoader):
             base_dir: str,
             name: str,
             stride: int = 1,
-            batch: Optional[int] = 10000,
+            batch: Optional[int] = None,
             n_batches: Optional[int] = 1,
     )-> Tuple[np.ndarray, np.ndarray]:
         """
