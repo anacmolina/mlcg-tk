@@ -269,13 +269,13 @@ def slice_coord_forces(
     config_map = LinearMap(cg_map)
     config_map_matrix = config_map.standard_matrix
     # taking only first 100 frames gives same results in ~1/15th of time
-    constraints = guess_pairwise_constraints(coords[:100], threshold=5e-3)
+    constraints = guess_pairwise_constraints(coords[:5], threshold=5e-3, n_batches = 10)
     if isinstance(mapping, str):
         if mapping == "slice_aggregate":
             method = constraint_aware_uni_map
             force_agg_results = project_forces(
-                coords=coords[::force_stride],
-                forces=forces[::force_stride],
+                coords=coords[:2],
+                forces=forces[:2],
                 coord_map=config_map,
                 constrained_inds=constraints,
                 method=method,
@@ -307,7 +307,6 @@ def slice_coord_forces(
 
     config_map_matrix = csr_array(config_map_matrix)
     force_map_matrix = csr_array(force_map_matrix)
-
     if batch_size is not None:
         cg_coords = batch_matmul(config_map_matrix, coords, batch_size=batch_size)
         cg_forces = batch_matmul(force_map_matrix, forces, batch_size=batch_size)
