@@ -1218,49 +1218,39 @@ class WRC_loader(DatasetLoader):
             If n_batches is greater than 1, divide the total trajectory to load into n_batches chunks.
         """
 
-        #if n_batches>1:
-        #    raise NotImplementedError(
-        #        "Loading in batches is not implemented for WRC_loader. "
-        #        "Please set n_batches to 1."
-        #    )
+        if n_batches>1:
+            raise NotImplementedError(
+                "Loading in batches is not implemented for WRC_loader. "
+                "Please set n_batches to 1."
+            )
         
-        coords_fns = np.array(sorted(glob(f"{base_dir}/{name}-replica1-coords*")))[:2]
-        forces_fns = np.array(sorted(glob(f"{base_dir}/{name}-replica1-forces*")))[:2]
+        pdb_fn = f"{base_dir}/{name}-top-chain.pdb"
+        coords_fns = np.array(natsorted(glob(f"{base_dir}/{name}-replica1-*.xtc")))
 
-        print(f"Coordinates files: {coords_fns}")
-        print(f"Forces files: {forces_fns}")
+        if len(coords_fns) == 0:
+            raise ValueError(f"No trajectory files found for {name} in {base_dir}")
+
+        forces_fns = np.array(natsorted(glob(f"{base_dir}/{name}-forces-replica1*.npy")))
 
         assert len(coords_fns) == len(forces_fns), \
             f"Number of coordinates files ({len(coords_fns)}) does not match number of forces files ({len(forces_fns)})"
 
-        ##Load coordinates
-        print(f'N batches: {n_batches} Batch: {batch}')
-        #if n_batches > 1:
-        #    assert batch is not None, "batch id must be set if more than 1 batch"
-        #    chunk_ids = chunker(
-        #        [i for i in range(len(coords_fns))], n_batches=n_batches
-        #    )
-        #    coords_fns = coords_fns[np.array(chunk_ids[batch])]
-        #    forces_fns = forces_fns[np.array(chunk_ids[batch])]
-
         aa_coords_list = []
         aa_forces_list = []
 
-        for coords_fn, forces_fn in tqdm(zip(coords_fns, forces_fns), total=len(coords_fns)):
-            coords = np.load(coords_fn)
+        for coords_fn, forces_fn in tqdm(zip(coords_fns[:1], forces_fns[:1]), total=len(coords_fns[:1])):
+            coords = md.load(coords_fn, top=pdb_fn).xyz
             forces = np.load(forces_fn)
 
             assert coords.shape == forces.shape
+
             coords = coords[::stride]
             forces = forces[::stride]
 
             aa_coords_list.append(coords)
             aa_forces_list.append(forces)
 
-        aa_coords = np.concatenate(aa_coords_list) * 10  # Convert to angstrom
-        aa_forces = np.concatenate(aa_forces_list) / 41.84# Convert to kcal/mol/angstrom
-        
-        print(f"Coordinates file: {aa_coords.shape}")
-        print(f"Forces file: {aa_forces.shape}")
+        aa_coords = np.concatenate(aa_coords_list) * 10     # Convert to angstrom
+        aa_forces = np.concatenate(aa_forces_list) / 41.84  # Convert to kcal/mol/angstrom
 
         return aa_coords, aa_forces
