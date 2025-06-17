@@ -1218,11 +1218,11 @@ class WRC_loader(DatasetLoader):
             If n_batches is greater than 1, divide the total trajectory to load into n_batches chunks.
         """
 
-        if n_batches>1:
-            raise NotImplementedError(
-                "Loading in batches is not implemented for WRC_loader. "
-                "Please set n_batches to 1."
-            )
+        #if n_batches>1:
+        #    raise NotImplementedError(
+        #        "Loading in batches is not implemented for WRC_loader. "
+        #        "Please set n_batches to 1."
+        #    )
         
         pdb_fn = f"{base_dir}/{name}-top-chain.pdb"
         coords_fns = np.array(natsorted(glob(f"{base_dir}/{name}-replica1-*.xtc")))
