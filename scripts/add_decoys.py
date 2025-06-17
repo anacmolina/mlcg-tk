@@ -207,7 +207,7 @@ def add_decoy(
 def update_partition_file(
     partition_file: str,
     decoy_h5_files: List[str],
-    mol_name_prefixes: List[str], 
+    mol_name_prefixes: List[str],
     partition_name: str,
 ) -> None:
     """
@@ -222,7 +222,7 @@ def update_partition_file(
     partition_file: str
         Path to the original partition YAML file that contains metadata about the datasets and molecules. The function will
         read this file and modify the "molecules" list within the "metasets" section of the partition.
-    
+
     decoy_h5_files: List[str]
         A list of paths to HDF5 files that contain the decoy molecules. Each file corresponds to a dataset in the partition file.
         The number and ordering of files should match the number and ordering of datasets in the partition file.
@@ -271,9 +271,11 @@ def update_partition_file(
 
     assert len(decoy_h5_files) == len(
         partition["train"]["metasets"].keys()
-         ), "Currently the number of decoy HDF5 files must match the number of datasets in the partition file."
+    ), "Currently the number of decoy HDF5 files must match the number of datasets in the partition file."
 
-    for dataset,decoy_h5_file in zip(partition["train"]["metasets"].keys(), decoy_h5_files):
+    for dataset, decoy_h5_file in zip(
+        partition["train"]["metasets"].keys(), decoy_h5_files
+    ):
         mols = deepcopy(partition["train"]["metasets"][dataset]["molecules"])
         detailed_indices = partition["train"]["metasets"][dataset]["detailed_indices"]
 
@@ -289,33 +291,33 @@ def update_partition_file(
                     f"{prefix}_{mol}"
                 )
                 decoy_mol = f"{prefix}_{mol}"
-                with h5py.File(decoy_h5_file, "r") as f: 
+                with h5py.File(decoy_h5_file, "r") as f:
                     if decoy_mol not in f[dataset]:
                         raise ValueError(
                             f"Molecule {decoy_mol} not found in dataset {dataset} of HDF5 file {decoy_h5_file}."
                         )
-                    # Check if the molecule has 'cg_coords' dataset
-                    if 'cg_coords' not in f[dataset][decoy_mol]:
+                    if "cg_coords" not in f[dataset][decoy_mol]:
                         raise ValueError(
                             f"'cg_coords' dataset not found for molecule {decoy_mol} in dataset {dataset} of HDF5 file {decoy_h5_file}."
                         )
 
-                    # Create training index for the decoy molecule
-                    idx_decoy = np.arange(f[dataset][decoy_mol]['cg_coords'].shape[0])
-                
+                    idx_decoy = np.arange(f[dataset][decoy_mol]["cg_coords"].shape[0])
+
                 original_path = detailed_indices.get(mol, "")
-                prior_tag = os.path.basename(original_path).replace(".npy", "").replace("train_idx_", "").replace(f"{mol}_", "")
-                
+                prior_tag = (
+                    os.path.basename(original_path)
+                    .replace(".npy", "")
+                    .replace("train_idx_", "")
+                    .replace(f"{mol}_", "")
+                )
+
                 if original_path:
-                    # Extract directory and create new filename
                     dir_path = os.path.dirname(original_path)
                     new_filename = f"train_idx_{decoy_mol}_{prior_tag}.npy"
                     new_path = os.path.join(dir_path, new_filename)
-                    
-                    # Save index array
+
                     np.save(new_path, idx_decoy)
-                    
-                    # Add to detailed_indices
+
                     detailed_indices[decoy_mol] = new_path
 
     dump_yaml(partition_name, partition)
