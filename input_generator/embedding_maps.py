@@ -25,7 +25,7 @@ embedding_map_fivebead = {
     "N": 21,
     "CA": 22,
     "C": 23,
-    "O": 24,
+    "O": 24
 }
 
 
@@ -61,6 +61,25 @@ class CGEmbeddingMapCA(CGEmbeddingMap):
 
     def __init__(self):
         ca_dict = {key: emb for key, emb in embedding_map_fivebead.items() if emb <= 20}
+        super().__init__(ca_dict)
+
+class CGEmbeddingMapCA_WRC(CGEmbeddingMap):
+    """
+    One-bead embedding map defined by:
+        - CA : backbone alpha carbon, carrying aminoacid identity
+    """
+
+    other_resName = {
+        "PHE1": 21,
+        "ASP1": 22,
+        "PRO1": 23,
+        #"PRO1": 21,
+        
+    }
+
+    def __init__(self):
+        ca_dict = {key: emb for key, emb in embedding_map_fivebead.items() if emb <= 20}
+        ca_dict.update(self.other_resName)
         super().__init__(ca_dict)
 
 
@@ -120,4 +139,41 @@ def embedding_ca(atom_df):
     else:
         print(f"Unknown atom name given: {name}")
         atom_type = "NA"
+    return atom_type
+
+def embedding_ca_wrc(atom_df):
+    """
+    Helper function for mapping high-resolution topology to
+    CA embedding map for WRC.
+    """
+
+    inv_CGEmbeddingMapCA_WRC = {v: k for k, v in CGEmbeddingMapCA_WRC().items()}
+
+    other_res = {
+        22003: 21,
+        22031: 23,
+        39249: 22,
+        39269: 23,
+        #261: 21,
+        #275: 21,
+    }
+
+    name, res, idxSeq, idx = atom_df["name"], atom_df["resName"], atom_df["resSeq"], atom_df['serial']
+
+    if name == "CA":
+        if idx in other_res.keys():
+            new_res = inv_CGEmbeddingMapCA_WRC[other_res[idx]]
+            if res in new_res:
+                atom_type = CGEmbeddingMapCA_WRC()[new_res]
+                print(f"Residue {res} with idx {idx} mapped to {new_res} in WRC embedding and atom type {atom_type}.")
+            else:
+                raise ValueError(
+                    f"Residue  {res} has no math in mapping."
+                )
+        else:
+            atom_type = embedding_map_fivebead[res]
+    else:
+        print(f"Unknown atom name given: {name}")
+        atom_type = "NA"
+
     return atom_type
