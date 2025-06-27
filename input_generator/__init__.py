@@ -22,8 +22,10 @@ from .embedding_maps import (
     CGEmbeddingMap,
     CGEmbeddingMapFiveBead,
     CGEmbeddingMapCA,
+    CGEmbeddingMapCA_WRC,
     embedding_fivebead,
     embedding_ca,
+    embedding_ca_wrc,
 )
 
 
