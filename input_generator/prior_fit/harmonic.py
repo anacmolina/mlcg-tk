@@ -50,6 +50,7 @@ def fit_harmonic_from_potential_estimates(
             bin_centers_nz[mask],
             dG_nz[mask],
             p0=[bin_centers_nz[torch.argmin(dG_nz[mask])], 60, -1],
+            maxfev=50000,
         )
         stat = {"k": popt[1], "x_0": popt[0]}
     except:

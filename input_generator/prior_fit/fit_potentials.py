@@ -76,29 +76,37 @@ def fit_potentials(
 
     statistics = {}
     for kf in list(histograms.keys()):
-        hist = torch.tensor(histograms[kf])
 
-        mask = hist > 0
-        bin_centers_nz = bin_centers[mask]
-        ncounts_nz = hist[mask]
-        dG_nz = -torch.log(ncounts_nz) / beta
+        try:
 
-        params = prior_fit_fn(
-            bin_centers_nz=bin_centers_nz,
-            dG_nz=dG_nz,
-            ncounts_nz=ncounts_nz,
-            **target_fit_kwargs
-        )
+            hist = torch.tensor(histograms[kf])
 
-        statistics[kf] = params
+            mask = hist > 0
+            bin_centers_nz = bin_centers[mask]
+            ncounts_nz = hist[mask]
+            dG_nz = -torch.log(ncounts_nz) / beta
 
-        statistics[kf]["p"] = hist / trapezoid(
-            hist.cpu().numpy(), x=bin_centers.cpu().numpy()
-        )
-        statistics[kf]["p_bin"] = bin_centers
-        statistics[kf]["V"] = dG_nz
-        statistics[kf]["V_bin"] = bin_centers_nz
+            params = prior_fit_fn(
+                bin_centers_nz=bin_centers_nz,
+                dG_nz=dG_nz,
+                ncounts_nz=ncounts_nz,
+                **target_fit_kwargs
+            )
 
+            statistics[kf] = params
+
+            statistics[kf]["p"] = hist / trapezoid(
+                hist.cpu().numpy(), x=bin_centers.cpu().numpy()
+            )
+            statistics[kf]["p_bin"] = bin_centers
+            statistics[kf]["V"] = dG_nz
+            statistics[kf]["V_bin"] = bin_centers_nz
+        
+        except:
+
+            print(f"Can not do prior fit for {kf} in {nl_name}, skipping")
+            continue
+         
     if getattr(prior_builder.nl_builder, "replace_gly_ca_stats", False):
         statistics = replace_gly_stats(
             statistics, gly_bead=embedding_map["GLY"], ca_bead=embedding_map["CA"]
