@@ -1171,6 +1171,8 @@ class SimInput_loader(DatasetLoader):
 class WRC_loader(DatasetLoader):
     """TODO: Description"""
 
+    #TODO: Build the .h5 file to load data more efficiently and with batches of the same sizes
+
     def get_traj_top(self, name: str, pdb_fn: str):
 
         """
@@ -1200,6 +1202,7 @@ class WRC_loader(DatasetLoader):
             stride: int = 1,
             batch: Optional[int] = None,
             n_batches: Optional[int] = 1,
+            load_forces: bool = True
     )-> Tuple[np.ndarray, np.ndarray]:
         """
         For a given WRC name, return the np.ndarray of coordinates and forces at input resolution.
@@ -1218,54 +1221,65 @@ class WRC_loader(DatasetLoader):
             If n_batches is greater than 1, divide the total trajectory to load into n_batches chunks.
         """
 
-        pdb_fn = f"{base_dir}/{name}-top-chain.pdb"
+        pdb_fn = f"{base_dir}/{name}-top.pdb"
         coords_fns = np.array(natsorted(glob(f"{base_dir}/{name}-replica*.xtc")))
-        forces_fns = np.array(natsorted(glob(f"{base_dir}/{name}-forces-replica*.npy")))
+        
+        if load_forces:
 
-        if len(coords_fns) == 0 or len(forces_fns) == 0:
-            raise ValueError(f"No trajectory files found for {name} in {base_dir}")
+            forces_fns = np.array(natsorted(glob(f"{base_dir}/{name}-forces-replica*.npy")))
 
-        assert len(coords_fns) == len(forces_fns), \
-            f"Number of coordinates files ({len(coords_fns)}) does not match number of forces files ({len(forces_fns)})"
+            if len(coords_fns) == 0 or len(forces_fns) == 0:
+                raise ValueError(f"No trajectory files found for {name} in {base_dir}")
+
+            assert len(coords_fns) == len(forces_fns), \
+                f"Number of coordinates files ({len(coords_fns)}) does not match number of forces files ({len(forces_fns)})"
+            
+            aa_forces_list = []    
+
 
         aa_coords_list = []
-        aa_forces_list = []    
 
         if n_batches==1:
 
             for coords_fn, forces_fn in tqdm(zip(coords_fns, forces_fns), total=len(coords_fns)):
-                coords = md.load(coords_fn, top=pdb_fn).xyz
-                forces = np.load(forces_fn)
-
-                assert coords.shape == forces.shape
-
-                coords = coords[::stride]
-                forces = forces[::stride]
-
-                #coords = np.load(f"{base_dir}/testing/{name}_coords.npy")
-                #forces = np.load(f"{base_dir}/testing/{name}_forces.npy")
+                coords = md.load(coords_fn, top=pdb_fn, stride=stride).xyz
+                
+                if load_forces:
+                    forces = np.load(forces_fn)
 
                 aa_coords_list.append(coords)
-                aa_forces_list.append(forces)
+
+                if load_forces:
+                    forces = forces[::stride]
+                    assert coords.shape == forces.shape
+
+                    aa_forces_list.append(forces)
         
         elif n_batches > 1:
 
-            coords = md.load(coords_fns[batch], top=pdb_fn).xyz
-            forces = np.load(forces_fns[batch])
-            
-            assert coords.shape == forces.shape
-            
-            coords = coords[::stride]
-            forces = forces[::stride]
+            coords = md.load(coords_fns[batch], top=pdb_fn, stride=stride).xyz
 
+            if load_forces:
+                forces = np.load(forces_fns[batch])    
+            
             aa_coords_list.append(coords)
-            aa_forces_list.append(forces)
+
+            if load_forces:
+                forces = forces[::stride]
+                assert coords.shape == forces.shape
+
+                aa_forces_list.append(forces)
 
         else:
             
             raise ValueError("n_batches must be either 1 or greater than 1")
         
         aa_coords = np.concatenate(aa_coords_list) * 10     # Convert to angstrom
-        aa_forces = np.concatenate(aa_forces_list) / 41.84  # Convert to kcal/mol/angstrom
-
-        return aa_coords, aa_forces
+    
+        if load_forces:
+            aa_forces = np.concatenate(aa_forces_list) / 41.84  # Convert to kcal/mol/angstrom
+            return aa_coords, aa_forces
+        
+        else:
+            
+            return aa_coords
