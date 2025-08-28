@@ -2,50 +2,65 @@ import numpy as np
 import mdtraj as md
 from natsort import natsorted
 from glob import glob
-import os
-from argparse import ArgumentParser
+from typing import Optional
+from time import ctime
+from jsonargparse import CLI
+from tqdm import tqdm
 
-# TODO: fix for several trajectories, 
-# TODO: select part for the trajectory change
-# TODO: Output filename
-def convert_npy_to_xtc(npy_files_path: str, 
-                       topology_file: str, 
+def convert_npy_to_xtc(npy_fns_path: str, 
+                       topology_fn: str, 
                        stride: int,
-                       traj: int):
+                       save_fn: str,
+                       ntraj: Optional[int] = None
+                       ):
     """
     Convert a .npy file containing coordinates to an .xtc file.
 
     Parameters:
-    npy_file (str): Path to the input .npy file.
-    topology_file (str): Path to the topology file (e.g., .pdb or .gro).
+    npy_fns_path (str): Path to the input .npy files.
+    topology_fn (str): Path to the topology file (e.g., .pdb or .gro).
+    stride (int): Interval by which to stride loaded data.
+    save_fn (str): Save output filename.
+    ntraj (int, optional): Choose one trajectory if the .npy files has more than one.
     """
-    print(f"Loading coordinates...")
+    print(f"Loading npy files...")
     
-    npy_files = natsorted(glob(f"{npy_files_path}/*_coords_*.npy"))
+    npy_fns = natsorted(glob(f"{npy_fns_path}/*_coords_*.npy"))
 
-    coordinates = [np.load(npy_file)[traj].squeeze()/10 for npy_file in npy_files] # TODO: check this conversion!!! to nm
-    coordinates = np.vstack(coordinates).squeeze()[::stride]
-    print(coordinates.shape)
-    topology = md.load(topology_file).topology
-    trajectory = md.Trajectory(xyz=coordinates, topology=topology)
-    xtc_file = f"sims_coords_traj{traj}.xtc"
+    coords = []
 
-    print(f"Saving trajectory to {xtc_file}...")
-    trajectory.save_xtc(xtc_file)
+    for npy_fn in tqdm(npy_fns):
+        xyz = np.load(npy_fn)
+
+        if xyz.shape[0] == 4:
+
+            assert ntraj is not None, "Number of trajectory (ntraj) must be defined and cannot be None."
+
+            xyz = xyz[ntraj].squeeze() / 10 # from angs to nm
+            coords.append(xyz)
+
+        else:
+
+            xyz = xyz.squeeze() / 10 # from angs to nm
+            coords.append(xyz)
+
+    coords = np.vstack(coords).squeeze()
+    coords = coords[::stride]
+
+    topology = md.load(topology_fn).topology
+    trajectory = md.Trajectory(xyz=coords, topology=topology)
+
+    print(f"Saving trajectory to {save_fn}...")
+    trajectory.save_xtc(save_fn)
 
 if __name__ == "__main__":
 
-    parser = ArgumentParser()
-    parser.add_argument("--npy-files-path", "-npypath", type=str, help="display a square of a given number",
-                        )
-    parser.add_argument("--topology-file", "-topfn", type=str, help="display a square of a given number",
-                        )
-    parser.add_argument("--stride", "-stride", type=int, help="display a square of a given number",
-                        )
-    parser.add_argument("--traj", "-traj", type=int, help="trajectory number",
-                        )
+    print("Start build_traj_file.py: {}".format(ctime()))
+
+    CLI([convert_npy_to_xtc])
+
+    print("Finish build_traj_file.py: {}".format(ctime()))
+
+
     
-    args = parser.parse_args()
-    #TODO: Fix for several copies
-    print(args.npy_files_path, args.topology_file, args.stride, args.traj)
-    convert_npy_to_xtc(args.npy_files_path, args.topology_file, args.stride, args.traj)
+    
