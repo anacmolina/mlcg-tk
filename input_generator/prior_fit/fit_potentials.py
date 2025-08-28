@@ -80,21 +80,21 @@ def fit_potentials(
         try:
 
             hist = torch.tensor(histograms[kf])
-
+    
             mask = hist > 0
             bin_centers_nz = bin_centers[mask]
             ncounts_nz = hist[mask]
             dG_nz = -torch.log(ncounts_nz) / beta
-
+    
             params = prior_fit_fn(
                 bin_centers_nz=bin_centers_nz,
                 dG_nz=dG_nz,
                 ncounts_nz=ncounts_nz,
                 **target_fit_kwargs
             )
-
+    
             statistics[kf] = params
-
+    
             statistics[kf]["p"] = hist / trapezoid(
                 hist.cpu().numpy(), x=bin_centers.cpu().numpy()
             )

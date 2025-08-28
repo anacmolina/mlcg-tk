@@ -3,18 +3,18 @@ from typing import Dict
 embedding_map_fivebead = {
     "ALA": 1,
     "CYS": 2,
-    "ASP": 3,
+    "ASP": 3,  #22
     "GLU": 4,
-    "PHE": 5,
+    "PHE": 5,  #21
     "GLY": 6,
     "HIS": 7,
     "ILE": 8,
     "LYS": 9,
     "LEU": 10,
-    "NLE": 10,  # Type Norleucine as Leucine
+    "NLE": 10, #Type Norleucine as Leucine
     "MET": 11,
     "ASN": 12,
-    "PRO": 13,
+    "PRO": 13, #23
     "GLN": 14,
     "ARG": 15,
     "SER": 16,
@@ -73,7 +73,6 @@ class CGEmbeddingMapCA_WRC(CGEmbeddingMap):
         "PHE1": 21,
         "ASP1": 22,
         "PRO1": 23,
-        #"PRO1": 21,
         
     }
 
@@ -154,8 +153,6 @@ def embedding_ca_wrc(atom_df):
         22031: 23,
         39249: 22,
         39269: 23,
-        #261: 21,
-        #275: 21,
     }
 
     name, res, idxSeq, idx = atom_df["name"], atom_df["resName"], atom_df["resSeq"], atom_df['serial']

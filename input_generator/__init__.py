@@ -42,6 +42,7 @@ from .prior_nls import (
 )
 
 from .prior_fit import fit_harmonic_from_potential_estimates, harmonic
+from .prior_fit.asymmetric_double_well import fit_asymmetric_double_well_from_potential_estimates
 from .prior_fit import (
     fit_repulsion_from_potential_estimates,
     fit_repulsion_from_values,
