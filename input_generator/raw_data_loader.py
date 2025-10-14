@@ -1316,12 +1316,10 @@ class MHC_loader(DatasetLoader):
 class WRC_loader(DatasetLoader):
     """TODO: Description"""
 
-    #TODO: Build the .h5 file to load data more efficiently and with batches of the same sizes
-
     def get_traj_top(self, name: str, pdb_fn: str):
 
         """
-        For a given WRC, return a loaded MDTraj object at the input resolution 
+        TODO: This is outdated. For a given WRC type, return a loaded MDTraj object at the input resolution 
         (atomistic in general) as well as the dataframe associated with its topology.
         
         Parameters
@@ -1346,8 +1344,7 @@ class WRC_loader(DatasetLoader):
             name: str,
             stride: int = 1,
             batch: Optional[int] = None,
-            n_batches: Optional[int] = 1,
-            load_forces: bool = True
+            n_batches: Optional[int] = None,
     )-> Tuple[np.ndarray, np.ndarray]:
         """
         For a given WRC name, return the np.ndarray of coordinates and forces at input resolution.
@@ -1365,66 +1362,147 @@ class WRC_loader(DatasetLoader):
         n_batches : Optional[int] or None
             If n_batches is greater than 1, divide the total trajectory to load into n_batches chunks.
         """
-
-        pdb_fn = f"{base_dir}/{name}-top.pdb"
-        coords_fns = np.array(natsorted(glob(f"{base_dir}/{name}-replica*.xtc")))
         
-        if load_forces:
+        h5_coords_fns = natsorted(glob(f"{base_dir}/{name}_coords_dataset.h5"))
+        h5_forces_fns = natsorted(glob(f"{base_dir}/{name}_forces_dataset.h5"))
 
-            forces_fns = np.array(natsorted(glob(f"{base_dir}/{name}-forces-replica*.npy")))
+        h5_coords = h5py.File(h5_coords_fns[0], "r")
+        h5_forces = h5py.File(h5_forces_fns[0], "r")
 
-            if len(coords_fns) == 0 or len(forces_fns) == 0:
-                raise ValueError(f"No trajectory files found for {name} in {base_dir}")
+        aa_coords = None
+        aa_forces = None
 
-            assert len(coords_fns) == len(forces_fns), \
-                f"Number of coordinates files ({len(coords_fns)}) does not match number of forces files ({len(forces_fns)})"
-            
-            aa_forces_list = []    
+        if n_batches != 15:
 
-
-        aa_coords_list = []
-
-        if n_batches==1:
-
-            for coords_fn, forces_fn in tqdm(zip(coords_fns, forces_fns), total=len(coords_fns)):
-                coords = md.load(coords_fn, top=pdb_fn, stride=stride).xyz
-                
-                if load_forces:
-                    forces = np.load(forces_fn)
-
-                aa_coords_list.append(coords)
-
-                if load_forces:
-                    forces = forces[::stride]
-                    assert coords.shape == forces.shape
-
-                    aa_forces_list.append(forces)
+            raise NotImplementedError(
+                "The WRC_loader is only implemented for a fixed number of batches of 15."
+            )
         
-        elif n_batches > 1:
-
-            coords = md.load(coords_fns[batch], top=pdb_fn, stride=stride).xyz
-
-            if load_forces:
-                forces = np.load(forces_fns[batch])    
-            
-            aa_coords_list.append(coords)
-
-            if load_forces:
-                forces = forces[::stride]
-                assert coords.shape == forces.shape
-
-                aa_forces_list.append(forces)
-
-        else:
-            
-            raise ValueError("n_batches must be either 1 or greater than 1")
-        
-        aa_coords = np.concatenate(aa_coords_list) * 10     # Convert to angstrom
-    
-        if load_forces:
-            aa_forces = np.concatenate(aa_forces_list) / 41.84  # Convert to kcal/mol/angstrom
-            return aa_coords, aa_forces
+            # TODO: Add chuncker to the loader?
         
         else:
-            
-            return aa_coords
+
+            aa_coords = h5_coords[f"slot_{batch}"][:][::stride] * 10      # Convert to angstrom
+            aa_forces = h5_forces[f"slot_{batch}"][:][::stride] / 41.84   # Convert to kcal/mol/angstrom
+
+            assert aa_coords.shape == aa_forces.shape
+
+            print(f"slot_{batch}", aa_coords.shape, aa_forces.shape)
+
+        return aa_coords, aa_forces
+
+#class WRC_loader(DatasetLoader):
+#    """TODO: Description"""
+#
+#    #TODO: Build the .h5 file to load data more efficiently and with batches of the same sizes
+#
+#    def get_traj_top(self, name: str, pdb_fn: str):
+#
+#        """
+#        For a given WRC, return a loaded MDTraj object at the input resolution 
+#        (atomistic in general) as well as the dataframe associated with its topology.
+#        
+#        Parameters
+#        ----------
+#        name : str
+#            Name of the WRC.
+#        pdb_fn : str
+#            Path to the structure PDB file.
+#        """
+#
+#        pdb = md.load(pdb_fn.format(name))
+#        aa_traj = pdb.atom_slice(
+#            [a.index for a in pdb.topology.atoms if a.residue.is_protein]
+#        )
+#        top_dataframe = aa_traj.topology.to_dataframe()[0]
+#
+#        return aa_traj, top_dataframe
+#    
+#    def load_coords_forces(
+#            self,
+#            base_dir: str,
+#            name: str,
+#            stride: int = 1,
+#            batch: Optional[int] = None,
+#            n_batches: Optional[int] = 1,
+#            load_forces: bool = True
+#    )-> Tuple[np.ndarray, np.ndarray]:
+#        """
+#        For a given WRC name, return the np.ndarray of coordinates and forces at input resolution.
+#
+#        Parameters
+#        ----------
+#        base_dir : str
+#            Base directory where the WRC data (coordinates and forces) is stored.
+#        name : str
+#            Name of the WRC.
+#        stride : int, optional
+#            Interval at which to sample frames from the trajectory, by default 1.
+#        batch : Optional[int] or None
+#            If the data is loaded in batches, this specifies the batch number to load.
+#        n_batches : Optional[int] or None
+#            If n_batches is greater than 1, divide the total trajectory to load into n_batches chunks.
+#        """
+#
+#        pdb_fn = f"{base_dir}/{name}-top.pdb"
+#        coords_fns = np.array(natsorted(glob(f"{base_dir}/{name}-replica*.xtc")))
+#        
+#        if load_forces:
+#
+#            forces_fns = np.array(natsorted(glob(f"{base_dir}/{name}-forces-replica*.npy")))
+#
+#            if len(coords_fns) == 0 or len(forces_fns) == 0:
+#                raise ValueError(f"No trajectory files found for {name} in {base_dir}")
+#
+#            assert len(coords_fns) == len(forces_fns), \
+#                f"Number of coordinates files ({len(coords_fns)}) does not match number of forces files ({len(forces_fns)})"
+#            
+#            aa_forces_list = []    
+#
+#
+#        aa_coords_list = []
+#
+#        if n_batches==1:
+#
+#            for coords_fn, forces_fn in tqdm(zip(coords_fns, forces_fns), total=len(coords_fns)):
+#                coords = md.load(coords_fn, top=pdb_fn, stride=stride).xyz
+#                
+#                if load_forces:
+#                    forces = np.load(forces_fn)
+#
+#                aa_coords_list.append(coords)
+#
+#                if load_forces:
+#                    forces = forces[::stride]
+#                    assert coords.shape == forces.shape
+#
+#                    aa_forces_list.append(forces)
+#        
+#        elif n_batches > 1:
+#
+#            coords = md.load(coords_fns[batch], top=pdb_fn, stride=stride).xyz
+#
+#            if load_forces:
+#                forces = np.load(forces_fns[batch])    
+#            
+#            aa_coords_list.append(coords)
+#
+#            if load_forces:
+#                forces = forces[::stride]
+#                assert coords.shape == forces.shape
+#
+#                aa_forces_list.append(forces)
+#
+#        else:
+#            
+#            raise ValueError("n_batches must be either 1 or greater than 1")
+#        
+#        aa_coords = np.concatenate(aa_coords_list) * 10     # Convert to angstrom
+#    
+#        if load_forces:
+#            aa_forces = np.concatenate(aa_forces_list) / 41.84  # Convert to kcal/mol/angstrom
+#            return aa_coords, aa_forces
+#        
+#        else:
+#            
+#            return aa_coords
