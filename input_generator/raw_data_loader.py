@@ -1374,7 +1374,7 @@ class WRC_loader(DatasetLoader):
         aa_coords = None
         aa_forces = None
 
-        if n_batches is not None:
+        if n_batches != 15:
 
             raise NotImplementedError(
                 "The WRC_loader is only implemented for a fixed number of batches of 15."
