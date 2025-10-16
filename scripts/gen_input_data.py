@@ -38,6 +38,7 @@ def process_raw_dataset(
     batch_size: Optional[int] = None,
     mol_num_batches: Optional[int] = 1,
     atoms_batch_size: Optional[int] = None,
+    restart: Optional[bool] = False,
 ):
     """
     Applies coarse-grained mapping to coordinates and forces using input sample
@@ -89,8 +90,27 @@ def process_raw_dataset(
         in the molecule, all atoms will be processed at once (default behavior).
 
     """
+    init_batch=None
+
+    if restart==True:
+
+        from natsort import natsorted
+        from glob import glob
+
+        prev_fns = natsorted(glob(f"{save_dir}/{names[0]}_batch*.npy"))
+
+        assert len(prev_fns) > 0, f"Not files founds on: {save_dir}"
+
+        init_batch = int([string for string in prev_fns[-1].split("_") if string.isdigit()][0]) + 1
+
+    else:
+
+        init_batch = 0
+
     dataset = RawDataset(dataset_name, names, tag, n_batches=mol_num_batches)
-    for samples in tqdm(dataset, f"Processing CG data for {dataset_name} dataset..."):
+    
+    for samples in tqdm(dataset[init_batch:], f"Processing CG data for {dataset_name} dataset..."):
+        #TODO: delete this line, print(samples.batch, samples.n_batches)
         samples.input_traj, samples.top_dataframe = sample_loader.get_traj_top(
             samples.mol_name, pdb_template_fn
         )
