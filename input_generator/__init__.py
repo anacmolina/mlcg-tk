@@ -14,6 +14,7 @@ from .raw_data_loader import (
     OPEP_loader,
     NTL9_loader,
     HDF5_loader,
+    WRC_loader,
 )
 
 
