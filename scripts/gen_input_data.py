@@ -176,6 +176,7 @@ def build_neighborlists(
     batch_size: Optional[int] = None,
     mol_num_batches: Optional[int] = 1,
     atoms_batch_size: Optional[int] = None,
+    restart: Optional[bool] = False,
 ):
     """
     Generates neighbour lists for all samples in dataset using prior term information
