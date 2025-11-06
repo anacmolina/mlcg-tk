@@ -257,7 +257,7 @@ def combine_datasets(
     if optional_name is None:
         output_tag = get_output_tag([datasets_label, force_tag], placement="after")
     else:
-        output_tag = get_output_tag([['WRC'], force_tag], placement="after")
+        output_tag = get_output_tag([optional_name, force_tag], placement="after")
 
     if save_h5:
         fnout_h5 = osp.join(save_dir, f"combined{output_tag}.h5")
