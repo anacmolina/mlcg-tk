@@ -232,7 +232,7 @@ def combine_datasets(
     dataset_names: List[str],
     save_dir: str,
     force_tag: Optional[str],
-    optional_name: Optional[str] = None,
+    optional_name: Optional[str],
     save_h5: Optional[bool] = True,
     save_partition: Optional[bool] = True,
 ):
