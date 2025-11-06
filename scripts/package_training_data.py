@@ -232,6 +232,7 @@ def combine_datasets(
     dataset_names: List[str],
     save_dir: str,
     force_tag: Optional[str],
+    optional_name: Optional[str] = None,
     save_h5: Optional[bool] = True,
     save_partition: Optional[bool] = True,
 ):
@@ -253,7 +254,10 @@ def combine_datasets(
     """
 
     datasets_label = "_".join(dataset_names)
-    output_tag = get_output_tag([datasets_label, force_tag], placement="after")
+    if optional_name is None:
+        output_tag = get_output_tag([datasets_label, force_tag], placement="after")
+    else:
+        output_tag = get_output_tag([['WRC'], force_tag], placement="after")
 
     if save_h5:
         fnout_h5 = osp.join(save_dir, f"combined{output_tag}.h5")
