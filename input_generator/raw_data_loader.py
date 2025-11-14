@@ -1366,6 +1366,8 @@ class WRC_loader(DatasetLoader):
         h5_coords_fns = natsorted(glob(f"{base_dir}/{name}_coords_dataset.h5"))
         h5_forces_fns = natsorted(glob(f"{base_dir}/{name}_forces_dataset.h5"))
 
+        print(h5_coords_fns, base_dir)
+
         h5_coords = h5py.File(h5_coords_fns[0], "r")
         h5_forces = h5py.File(h5_forces_fns[0], "r")
 
