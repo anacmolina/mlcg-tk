@@ -432,6 +432,10 @@ class SampleCollection:
         )
         cg_xyz = self.input_traj.atom_slice(self.cg_atom_indices).xyz
         cg_traj = md.Trajectory(cg_xyz, md.Topology.from_dataframe(self.cg_dataframe))
+        
+        for atom_idx in range(cg_traj.n_atoms):
+            cg_traj.topology.atom(atom_idx).formal_charge = None
+        
         cg_traj.save_pdb(f"{mol_save_templ}cg_structure.pdb")
 
         embeds = np.array(self.cg_dataframe["type"].to_list())
@@ -469,6 +473,7 @@ class SampleCollection:
                 np.save(f"{save_templ}cg_forces.npy", cg_forces)
 
         if save_cg_maps:
+            print("cg_map: ", type(self.cg_map))
             if not hasattr(self, "cg_map"):
                 warnings.warn("No cg coordinate map found. Skipping save.")
             else:
