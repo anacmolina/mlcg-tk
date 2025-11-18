@@ -361,10 +361,12 @@ class SampleCollection:
             )
             return
         else:
+            #TODO: Check filter cis for WRC samples
             if filter_cis:
                 coords, forces = filter_cis_frames(
                     coords, forces, topology, verbose=True
                 )
+                print("filter cis")
             if coords.shape[0] != 0:
                 # since the cis-pro filtering might have removed a lot of frames
                 # we need to make sure the force_stride is not too large
@@ -373,7 +375,7 @@ class SampleCollection:
                     force_stride = force_stride // 10
                     if force_stride == 1:
                         break
-
+                print("coords shape != 0")
                 cg_coords, cg_forces, cg_map, force_map = slice_coord_forces(
                     coords,
                     forces,
@@ -386,6 +388,10 @@ class SampleCollection:
                 # update the entries with the sparse version
                 self.cg_map = cg_map
                 self.force_map = force_map
+                from scipy.sparse import issparse
+                print("cg_map process_coords_forces: ", issparse(self.cg_map))
+                print("force_map process_coords_forces: ", issparse(self.force_map))
+
             else:  # all frames were removed by cis-filtering
                 cg_coords = None
                 cg_forces = None
@@ -473,7 +479,6 @@ class SampleCollection:
                 np.save(f"{save_templ}cg_forces.npy", cg_forces)
 
         if save_cg_maps:
-            print("cg_map: ", type(self.cg_map))
             if not hasattr(self, "cg_map"):
                 warnings.warn("No cg coordinate map found. Skipping save.")
             else:
