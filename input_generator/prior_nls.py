@@ -20,22 +20,27 @@ from .embedding_maps import all_residues
 
 
 def check_graph_distance(
-    graph: nx.Graph, conn_comp: List[set], node_1: int, node_2: int, min_distance: int
+    graph: nx.Graph, topology : md.Topology, conn_comp: List[set], node_1: int, node_2: int, min_distance: int
 ) -> bool:
     """Function to check if the shortest path between to nodes in a graph is smaller than `min_distance`
 
     This covers the case when the nodes are in different connected components before hand.
-    to save computation time.
+    to save computation time. It also implements a heuristic to only compute the minimum
+    path for atoms in residues that are close enough to be inside the minimum distance.
     """
     con_1 = [i for i, comp in enumerate(conn_comp) if node_1 in comp][0]
     con_2 = [i for i, comp in enumerate(conn_comp) if node_2 in comp][0]
     if con_1 == con_2:
-        shortest_path = bidirectional_shortest_path(graph, node_1, node_2)
-        dist = len(shortest_path)
-        return dist >= min_distance
+        residue_dif =abs(topology.atom(node_1).residue.index- topology.atom(node_2).residue.index)
+        low_bound_graph_distance = residue_dif*3 -1
+        if low_bound_graph_distance <= min_distance:
+            shortest_path = bidirectional_shortest_path(graph, node_1, node_2)
+            dist = len(shortest_path)
+            return dist >= min_distance
+        else:
+            return True
     else:
         return True
-
 
 class StandardBonds:
     """
@@ -230,7 +235,7 @@ class Non_Bonded:
                 )
                 and (
                     graph.has_edge(p[0], p[1]) == False
-                    and check_graph_distance(graph, conn_comps, p[0], p[1], min_pair)
+                    and check_graph_distance(graph, topology, conn_comps, p[0], p[1], min_pair)
                 )
                 and not np.all(bond_edges == p[:, None], axis=0).any()
                 and not np.all(angle_edges[[0, 2], :] == p[:, None], axis=0).any()
