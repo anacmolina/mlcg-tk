@@ -188,7 +188,7 @@ def compute_statistics(
         # cummulative statistics are only saved if individual statistics were not saved
         fnout = osp.join(
             save_dir,
-            f"{get_output_tag([samples.tag, prior_tag], placement='before')}prior_builders.pck",
+            f"{get_output_tag([samples.tag, dataset_name, prior_tag], placement='before')}prior_builders.pck",
         )
         with open(fnout, "wb") as f:
             pck.dump(prior_builders, f)
