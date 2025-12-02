@@ -67,6 +67,8 @@ def produce_delta_forces(
     batch_size: int,
     force_tag: Optional[str] = None,
     mol_num_batches: Optional[int] = 1,
+    start_batch: Optional[int] = None,
+    end_batch: Optional[int] = None,
 ):
     """
     Removes prior energy terms from input forces to produce delta force input
@@ -100,8 +102,14 @@ def produce_delta_forces(
     # prior_model = torch.load(open(prior_fn, "rb")).models.to(device)
     prior_model = torch.load(open(prior_fn, "rb")).to(device)
     dataset = RawDataset(dataset_name, names, tag, n_batches=mol_num_batches)
+    
+    if start_batch is None:
+        start_batch = 0
+    if end_batch is None:
+        end_batch = mol_num_batches
+
     for samples in tqdm(
-        dataset, f"Processing delta forces for {dataset_name} dataset..."
+        dataset[start_batch:end_batch], f"Processing delta forces for {dataset_name} dataset..."
     ):
         if not samples.has_saved_cg_output(save_dir, prior_tag):
             continue
