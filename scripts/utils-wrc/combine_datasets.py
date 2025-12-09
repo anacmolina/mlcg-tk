@@ -11,9 +11,9 @@ from jsonargparse import CLI
 from typing import List, Optional
 from input_generator.utils import get_output_tag
 
-def restructure_h5_dataset_hierarchy(
+def update_h5_dataset_hierarchy(
     dataset_fn: str,
-    new_dataset_fn: str,
+    save_dir: str,
     ):
 
     """
@@ -29,7 +29,9 @@ def restructure_h5_dataset_hierarchy(
      
     initial_dataset = h5py.File(dataset_fn, 'r')
 
-    with h5py.File(new_dataset_fn, "w") as f:
+    fnout_h5 = f'{save_dir}/{(dataset_fn.split('/')[-1]).split('.')[0]}_updated.h5'
+
+    with h5py.File(fnout_h5, "w") as f:
         datasets = list(initial_dataset.keys())
         for dataset in datasets:
             print(dataset)
@@ -143,6 +145,9 @@ if __name__ == "__main__":
 
     # CLI([combine_datasets], as_positional=False)
 
-
+    update_h5_dataset_hierarchy(
+        dataset_fn="/group/ag_clementi_cmb/projects/navigating_protein_landscapes/0_training_data/DECOY_combined_cath_dimer_opep_nicks_transferable_delta_dataset.h5",
+        save_dir="/net/scratch-sheldon/am7078fu/projects/5beads-WRC",
+    )
 
     print("Finish combine_datasets.py: {}".format(ctime()))
