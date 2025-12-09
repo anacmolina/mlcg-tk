@@ -11,6 +11,36 @@ from jsonargparse import CLI
 from typing import List, Optional
 from input_generator.utils import get_output_tag
 
+def restructure_h5_dataset_hierarchy(
+    dataset_fn: str,
+    new_dataset_fn: str,
+    ):
+
+    """
+    Loads a dataset and saves the modified structure to a new file.
+
+    Parameters
+    ----------
+    dataset_fn : str
+        Name of the input dataset file to be processed.
+    new_dataset_fn : str
+        Name of the output file where the dataset with the new hierarchy will be saved.
+    """
+     
+    initial_dataset = h5py.File(dataset_fn, 'r')
+
+    with h5py.File(new_dataset_fn, "w") as f:
+        datasets = list(initial_dataset.keys())
+        for dataset in datasets:
+            print(dataset)
+            grp = f.create_group(dataset)
+            subsets = list(initial_dataset[dataset].keys())
+            for subset in subsets[:2]:
+                subgrp = grp.create_group(subset)
+                for variable in ['cg_coords', 'cg_delta_forces']:
+                    f[dataset][subset][variable] = h5py.ExternalLink(dataset_fn, f'/{dataset}/{subset}/{variable}')
+                f[dataset][subset]['cg_embeds'] = h5py.ExternalLink(dataset_fn, f'/{dataset}/{subset}.attrs/cg_embeds')
+
 def combine_datasets(
     dataset_names: List[str],
     save_dir: str,
@@ -97,20 +127,22 @@ def combine_datasets(
 if __name__ == "__main__":
     print("Start combine_datasets.py: {}".format(ctime()))
 
-    dataset_names = ['WT', 'A455P']
-    save_dir = "/net/scratch-sheldon/am7078fu/projects/5beads-WRC/processed_data"
-    force_tag = "cgschnet"
-    #save_h5: Optional[bool] = True,
-    #save_partition: Optional[bool] = True,
-    new_name = "WRC"
-
-    combine_datasets(
-        dataset_names=dataset_names,
-        save_dir=save_dir,
-        force_tag=force_tag,
-        new_name=new_name,
-    )
+    #dataset_names = ['WT', 'A455P']
+    #save_dir = "/net/scratch-sheldon/am7078fu/projects/5beads-WRC/processed_data"
+    #force_tag = "cgschnet"
+    ##save_h5: Optional[bool] = True,
+    ##save_partition: Optional[bool] = True,
+    #new_name = "WRC"
+#
+    #combine_datasets(
+    #    dataset_names=dataset_names,
+    #    save_dir=save_dir,
+    #    force_tag=force_tag,
+    #    new_name=new_name,
+    #)
 
     # CLI([combine_datasets], as_positional=False)
+
+
 
     print("Finish combine_datasets.py: {}".format(ctime()))
