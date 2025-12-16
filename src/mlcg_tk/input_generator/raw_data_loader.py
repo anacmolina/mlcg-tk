@@ -661,7 +661,7 @@ class Villin_loader(DatasetLoader):
         forces_fns = [
             fn.replace(
                 "coords_nowater/villin_coor", "forces_nowater/villin_force"
-            ).replace(".xtc",".dcd")
+            ).replace(".xtc", ".dcd")
             for fn in coords_fns
         ]
         coords_fns = np.array(coords_fns)
@@ -678,13 +678,15 @@ class Villin_loader(DatasetLoader):
         aa_coord_list = []
         aa_force_list = []
         for c, f in tqdm(zip(coords_fns, forces_fns), total=len(coords_fns)):
-            coords = md.load_xtc(c,top=pdb_top).xyz*10
-            forces = md.load_dcd(f,top=pdb_top).xyz*10
+            coords = md.load_xtc(c, top=pdb_top).xyz * 10
+            forces = md.load_dcd(f, top=pdb_top).xyz * 10
             if coords.shape == forces.shape:
                 aa_coord_list.append(coords[::stride])
                 aa_force_list.append(forces[::stride])
             else:
-                warnings.warn(f"file {c} and \n file {f} \n have different shapes. Skipping")
+                warnings.warn(
+                    f"file {c} and \n file {f} \n have different shapes. Skipping"
+                )
 
         aa_coords = np.concatenate(aa_coord_list)
         aa_forces = np.concatenate(aa_force_list)
