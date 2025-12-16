@@ -2,7 +2,7 @@ import mdtraj as md
 import pickle
 import pandas as pd
 
-from typing import List, Dict, Tuple, Optional, Union
+from typing import List, Dict, Tuple, Optional, Union, Type
 from copy import deepcopy
 import numpy as np
 import mdtraj as md
@@ -879,23 +879,25 @@ class RawDataset:
         names: List[str],
         tag: str,
         n_batches: Optional[int] = 1,
+        collection_cls: Type[SampleCollection] = SampleCollection,
     ) -> None:
         self.dataset_name = dataset_name
         self.names = names
         self.tag = tag
         self.dataset = []
+        self.collection_cls = collection_cls
 
         for name in names:
             if n_batches > 1:
                 for batch in range(n_batches):
-                    data_samples = SampleCollection(
+                    data_samples = collection_cls(
                         name=f"{name}_batch_{batch}",
                         tag=tag,
                         n_batches=n_batches,
                     )
                     self.dataset.append(data_samples)
             else:
-                data_samples = SampleCollection(
+                data_samples = collection_cls(
                     name=name,
                     tag=tag,
                     n_batches=n_batches,
@@ -925,13 +927,18 @@ class SimInput:
         List of SampleCollection objects for all structures
     """
 
-    def __init__(self, dataset_name: str, tag: str, pdb_fns: List[str]) -> None:
+    def __init__(self, 
+                 dataset_name: str, 
+                 tag: str, 
+                 pdb_fns: List[str],
+                 collection_cls: Type[SampleCollection] = SampleCollection
+            ) -> None:
         self.dataset_name = dataset_name
         self.names = [fn[:-4] for fn in pdb_fns]
         self.dataset = []
 
         for name in self.names:
-            data_samples = SampleCollection(
+            data_samples = collection_cls(
                 name=name,
                 tag=tag,
             )

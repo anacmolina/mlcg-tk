@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 from time import ctime
 
-from typing import Dict, List, Union, Callable, Optional
+from typing import Dict, List, Union, Callable, Optional, Type
 from jsonargparse import CLI
 import pickle as pck
 
@@ -35,6 +35,7 @@ def process_raw_dataset(
     batch_size: Optional[int] = None,
     mol_num_batches: Optional[int] = 1,
     atoms_batch_size: Optional[int] = None,
+    collection_cls: Type[SampleCollection] = SampleCollection,
 ):
     """
     Applies coarse-grained mapping to coordinates and forces using input sample
@@ -84,9 +85,16 @@ def process_raw_dataset(
         force mappings (as defined by `cg_mapping_strategy`) will be computed in batches of this size. To significantly improve
         computational efficiency, it is assumed that structures have ordered residues. If `atoms_batch_size` exceeds the total number of atoms
         in the molecule, all atoms will be processed at once (default behavior).
+    collection_cls : Type[SampleCollection]
+        Class type for sample collection
 
     """
-    dataset = RawDataset(dataset_name, names, tag, n_batches=mol_num_batches)
+    dataset = RawDataset(dataset_name, 
+                         names, 
+                         tag, 
+                         n_batches=mol_num_batches,
+                         collection_cls=collection_cls
+                    )
     for samples in tqdm(dataset, f"Processing CG data for {dataset_name} dataset..."):
         samples.input_traj, samples.top_dataframe = sample_loader.get_traj_top(
             samples.mol_name, pdb_template_fn
@@ -153,6 +161,7 @@ def build_neighborlists(
     batch_size: Optional[int] = None,
     mol_num_batches: Optional[int] = 1,
     atoms_batch_size: Optional[int] = None,
+    collection_cls: Type[SampleCollection] = SampleCollection,
 ):
     """
     Generates neighbour lists for all samples in dataset using prior term information
@@ -202,8 +211,10 @@ def build_neighborlists(
     atoms_batch_size : int
         unused in this function
         present to allow the use of the same .yaml config for process_raw_dataset and build_neighborlists
+    collection_cls : Type[SampleCollection]
+        Class type for sample collection
     """
-    dataset = RawDataset(dataset_name, names, tag)
+    dataset = RawDataset(dataset_name, names, tag, collection_cls=collection_cls)
     for samples in tqdm(dataset, f"Building NL for {dataset_name} dataset..."):
         samples.input_traj, samples.top_dataframe = sample_loader.get_traj_top(
             samples.name, pdb_template_fn
