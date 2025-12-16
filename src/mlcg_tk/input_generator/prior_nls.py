@@ -208,7 +208,7 @@ class Non_Bonded:
         # No self-edges
         mask = ~np.eye(conn_mat.shape[0], dtype=bool)
 
-        # No non-self edges
+        # No non-self edges (use out kwarg for memory efficiency)
         np.logical_and(mask, conn_mat == 0, out=mask)
 
         # Minimum graph distance
