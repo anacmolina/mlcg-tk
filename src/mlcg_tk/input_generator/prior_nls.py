@@ -196,7 +196,6 @@ class Non_Bonded:
         ).numpy()
         conn_mat = get_connectivity_matrix(mlcg_top).numpy()
         graph = nx.Graph(conn_mat)
-        conn_comps = list(nx.connected_components(graph))
         csgraph = nx.to_scipy_sparse_array(graph, format="csr")
         # Compute shortest paths as a dense matrix. Diagonal values should be 0, and
         # dists[i, j] is np.inf if i and j are in different connected components
