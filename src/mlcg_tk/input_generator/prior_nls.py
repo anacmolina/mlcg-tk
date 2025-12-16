@@ -191,40 +191,52 @@ class Non_Bonded:
             in terminal residues
         """
         mlcg_top = Topology.from_mdtraj(topology)
-        fully_connected_edges = _symmetrise_distance_interaction(
-            mlcg_top.fully_connected2torch()
-        ).numpy()
         conn_mat = get_connectivity_matrix(mlcg_top).numpy()
         graph = nx.Graph(conn_mat)
         csgraph = nx.to_scipy_sparse_array(graph, format="csr")
-        # Compute shortest paths as a dense matrix. Diagonal values should be 0, and
-        # dists[i, j] is np.inf if i and j are in different connected components
+
+        # Compute graph shortest distances and store them in a dense matrix. 
+        # Diagonal values should be 0, and dists[i, j] is np.inf if i and j 
+        # are in different connected components
         dists = shortest_path(
             csgraph,
-            method="auto",  # To be safe, but should always pick Djikstra automatically
+            method="auto",  # To be safe, but should always select Djikstra ('D')
             directed=False,
             unweighted=True,
         )
 
-        pairs_parsed = np.array(
-            [
-                p
-                for p in fully_connected_edges.T
-                if (
-                    abs(
-                        topology.atom(p[0]).residue.index
-                        - topology.atom(p[1]).residue.index
-                    )
-                    >= res_exclusion
-                )
-                and (
-                    (not graph.has_edge(p[0], p[1]))
-                    and dists[p[0], p[1]] >= min_pair + 1
-                )
-                and not np.all(bond_edges == p[:, None], axis=0).any()
-                and not np.all(angle_edges[[0, 2], :] == p[:, None], axis=0).any()
-            ]
-        )
+        # No self-edges
+        mask = ~np.eye(conn_mat.shape[0], dtype=bool)
+
+        # No non-self edges
+        np.logical_and(mask, conn_mat == 0, out=mask)
+
+        # Minimum graph distance
+        np.logical_and(mask, dists >= min_pair + 1, out=mask)
+
+        # Not among bond edges
+        bond_edges_mask = np.zeros_like(mask)
+        bond_edges_mask[bond_edges[0], bond_edges[1]] = True
+        np.logical_and(mask, ~bond_edges_mask, out=mask)
+
+        # Not among angle edges
+        angle_edges_mask = np.zeros_like(mask)
+        angle_edges_mask[angle_edges[0], angle_edges[2]] = True
+        np.logical_and(mask, ~angle_edges_mask, out=mask)
+
+        # From boolean mask to nonzero indices
+        edges_to_consider = torch.from_numpy(np.array(np.nonzero(mask)))
+        edges_to_consider = _symmetrise_distance_interaction(edges_to_consider).numpy().T
+        pairs_parsed = []
+        for p in tqdm(edges_to_consider):
+            if (
+                (abs(
+                    topology.atom(p[0]).residue.index
+                    - topology.atom(p[1]).residue.index
+                ) >= res_exclusion)
+            ):
+                pairs_parsed.append(p)
+        pairs_parsed = np.array(pairs_parsed)
 
         non_bonded_edges = torch.tensor(pairs_parsed.T)
         non_bonded_edges = torch.unique(
