@@ -228,7 +228,7 @@ class Non_Bonded:
         edges_to_consider = torch.from_numpy(np.array(np.nonzero(mask)))
         edges_to_consider = _symmetrise_distance_interaction(edges_to_consider).numpy().T
         pairs_parsed = []
-        for p in tqdm(edges_to_consider):
+        for p in edges_to_consider:
             if (
                 (abs(
                     topology.atom(p[0]).residue.index
