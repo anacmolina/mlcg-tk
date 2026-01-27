@@ -653,12 +653,17 @@ class Villin_loader(DatasetLoader):
         n_batches: int
             if greater than 1, divide the total trajectories to load into n_batches chunks
         """
+
+        pdb_top = md.load_pdb(os.path.join(base_dir, f"topology.pdb"))
         coords_fns = sorted(
-            glob(os.path.join(base_dir, f"{name}/*_coords.npy"))
+            glob(os.path.join(base_dir, f"coords_nowater/villin*_coor*.xtc"))
         )  # combining all trajectories from single starting structure
-
-        forces_fns = sorted(glob(os.path.join(base_dir, f"{name}/*_forces.npy")))
-
+        forces_fns = [
+            fn.replace(
+                "coords_nowater/villin_coor", "forces_nowater/villin_force"
+            ).replace(".xtc",".dcd")
+            for fn in coords_fns
+        ]
         coords_fns = np.array(coords_fns)
         forces_fns = np.array(forces_fns)
 
@@ -673,12 +678,13 @@ class Villin_loader(DatasetLoader):
         aa_coord_list = []
         aa_force_list = []
         for c, f in tqdm(zip(coords_fns, forces_fns), total=len(coords_fns)):
-            coords = np.load(c)
-            forces = np.load(f)
-            assert coords.shape == forces.shape
-
-            aa_coord_list.append(coords[::stride])
-            aa_force_list.append(forces[::stride])
+            coords = md.load_xtc(c,top=pdb_top).xyz*10
+            forces = md.load_dcd(f,top=pdb_top).xyz*10
+            if coords.shape == forces.shape:
+                aa_coord_list.append(coords[::stride])
+                aa_force_list.append(forces[::stride])
+            else:
+                warnings.warn(f"file {c} and \n file {f} \n have different shapes. Skipping")
 
         aa_coords = np.concatenate(aa_coord_list)
         aa_forces = np.concatenate(aa_force_list)

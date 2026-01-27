@@ -1,21 +1,18 @@
 import os.path as osp
 import sys
 
-SCRIPT_DIR = osp.abspath(osp.dirname(__file__))
-sys.path.insert(0, osp.join(SCRIPT_DIR, "../"))
-
-from input_generator.raw_dataset import SampleCollection, RawDataset, SimInput
-from input_generator.embedding_maps import (
+from mlcg_tk.input_generator.raw_dataset import SampleCollection, RawDataset, SimInput
+from mlcg_tk.input_generator.embedding_maps import (
     CGEmbeddingMap,
 )
-from input_generator.raw_data_loader import DatasetLoader, SimInput_loader
-from input_generator.prior_gen import Bonds, PriorBuilder
-from input_generator.utils import get_output_tag
+from mlcg_tk.input_generator.raw_data_loader import DatasetLoader, SimInput_loader
+from mlcg_tk.input_generator.prior_gen import Bonds, PriorBuilder
+from mlcg_tk.input_generator.utils import get_output_tag
 from tqdm import tqdm
 
 from time import ctime
 
-from typing import Dict, List, Union, Callable, Optional
+from typing import Dict, List, Union, Callable, Optional, Type
 from jsonargparse import CLI
 import pickle as pck
 
@@ -40,6 +37,8 @@ def process_sim_input(
     prior_tag: str,
     prior_builders: List[PriorBuilder],
     mass_scale: Optional[float] = 418.4,
+    collection_cls: Type[SampleCollection] = SampleCollection,
+    smpl_loader: Type[DatasetLoader] = SimInput_loader,
 ):
     """
     Generates input AtomicData objects for coarse-grained simulations
@@ -72,15 +71,19 @@ def process_sim_input(
         List of PriorBuilder objects and their corresponding parameters
     mass_scale : str
         Optional scaling factor applied to atomic masses
+    collection_cls : Type[SampleCollection]
+        Class type for sample collection
+    smpl_loader : Type[DatasetLoader]
+        Loader class for dataset
     """
     cg_coord_list = []
     cg_type_list = []
     cg_mass_list = []
     cg_nls_list = []
 
-    dataset = SimInput(dataset_name, tag, pdb_fns)
+    dataset = SimInput(dataset_name, tag, pdb_fns, collection_cls=collection_cls)
     for samples in tqdm(dataset, f"Processing CG data for {dataset_name} dataset..."):
-        sample_loader = SimInput_loader()
+        sample_loader = smpl_loader()
         samples.input_traj, samples.top_dataframe = sample_loader.get_traj_top(
             name=samples.name, raw_data_dir=raw_data_dir
         )
@@ -130,10 +133,12 @@ def process_sim_input(
         f"{save_dir}{get_output_tag([dataset_name, tag], placement='before')}configurations.pt",
     )
 
+def main():
+    print("Start gen_sim_input.py: {}".format(ctime()))
+    CLI([process_sim_input])
+    print("Finish gen_sim_input.py: {}".format(ctime()))
+
+
 
 if __name__ == "__main__":
-    print("Start gen_sim_input.py: {}".format(ctime()))
-
-    CLI([process_sim_input])
-
-    print("Finish gen_sim_input.py: {}".format(ctime()))
+    main()

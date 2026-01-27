@@ -1,9 +1,6 @@
 import os.path as osp
 import sys
 
-SCRIPT_DIR = osp.abspath(osp.dirname(__file__))
-sys.path.insert(0, osp.join(SCRIPT_DIR, "../"))
-
 import mdtraj as md
 import numpy as np
 import torch
@@ -11,8 +8,9 @@ import torch
 from mlcg.data.atomic_data import AtomicData
 from mlcg.data._keys import FORCE_KEY
 from mlcg.nn import SumOut
-from input_generator.raw_dataset import *
-from input_generator.utils import get_output_tag
+
+from mlcg_tk.input_generator.raw_dataset import *
+from mlcg_tk.input_generator.utils import get_output_tag
 
 from tqdm import tqdm
 
@@ -189,9 +187,11 @@ def produce_delta_forces(
         )
 
 
-if __name__ == "__main__":
+def main():
     print("Start produce_delta_forces.py: {}".format(ctime()))
-
     CLI([produce_delta_forces])
-
     print("Finish produce_delta_forces.py: {}".format(ctime()))
+
+
+if __name__ == "__main__":
+    main()    

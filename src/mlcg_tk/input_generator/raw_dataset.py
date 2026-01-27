@@ -1,7 +1,8 @@
 import mdtraj as md
 import pickle
+import pandas as pd
 
-from typing import List, Dict, Tuple, Optional, Union
+from typing import List, Dict, Tuple, Optional, Union, Type
 from copy import deepcopy
 import numpy as np
 import mdtraj as md
@@ -392,6 +393,8 @@ class SampleCollection:
             else:  # all frames were removed by cis-filtering
                 cg_coords = None
                 cg_forces = None
+                self.cg_map = None
+                self.force_map = None
 
             self.cg_coords = cg_coords
             self.cg_forces = cg_forces
@@ -434,6 +437,10 @@ class SampleCollection:
             save_dir, get_output_tag([self.tag, self.name], placement="before")
         )
         cg_xyz = self.input_traj.atom_slice(self.cg_atom_indices).xyz
+
+        with pd.option_context('future.no_silent_downcasting', True):# Clean pd dataframe from <NA entries> before saving
+            self.cg_dataframe.formal_charge = self.cg_dataframe.formal_charge.fillna(0) 
+
         cg_traj = md.Trajectory(cg_xyz, md.Topology.from_dataframe(self.cg_dataframe))
         
         for atom_idx in range(cg_traj.n_atoms):
@@ -476,15 +483,15 @@ class SampleCollection:
                 np.save(f"{save_templ}cg_forces.npy", cg_forces)
 
         if save_cg_maps:
-            if not hasattr(self, "cg_map"):
-                warnings.warn("No cg coordinate map found. Skipping save.")
-            else:
+            if hasattr(self, "cg_map") and self.cg_map is not None:
                 np.save(f"{mol_save_templ}cg_coord_map.npy", self.cg_map.toarray())
-
-            if not hasattr(self, "force_map"):
-                warnings.warn("No cg force map found. Skipping save.")
             else:
+                warnings.warn("No cg coordinate map found. Skipping save.")
+
+            if hasattr(self, "force_map") and self.force_map is not None:
                 np.save(f"{mol_save_templ}cg_force_map.npy", self.force_map.toarray())
+            else:
+                warnings.warn("No cg force map found. Skipping save.")
 
     def load_cg_force_map(self, save_dir: str) -> np.ndarray:
         """
@@ -877,23 +884,25 @@ class RawDataset:
         names: List[str],
         tag: str,
         n_batches: Optional[int] = 1,
+        collection_cls: Type[SampleCollection] = SampleCollection,
     ) -> None:
         self.dataset_name = dataset_name
         self.names = names
         self.tag = tag
         self.dataset = []
+        self.collection_cls = collection_cls
 
         for name in names:
             if n_batches > 1:
                 for batch in range(n_batches):
-                    data_samples = SampleCollection(
+                    data_samples = collection_cls(
                         name=f"{name}_batch_{batch}",
                         tag=tag,
                         n_batches=n_batches,
                     )
                     self.dataset.append(data_samples)
             else:
-                data_samples = SampleCollection(
+                data_samples = collection_cls(
                     name=name,
                     tag=tag,
                     n_batches=n_batches,
@@ -923,13 +932,18 @@ class SimInput:
         List of SampleCollection objects for all structures
     """
 
-    def __init__(self, dataset_name: str, tag: str, pdb_fns: List[str]) -> None:
+    def __init__(self, 
+                 dataset_name: str, 
+                 tag: str, 
+                 pdb_fns: List[str],
+                 collection_cls: Type[SampleCollection] = SampleCollection
+            ) -> None:
         self.dataset_name = dataset_name
         self.names = [fn[:-4] for fn in pdb_fns]
         self.dataset = []
 
         for name in self.names:
-            data_samples = SampleCollection(
+            data_samples = collection_cls(
                 name=name,
                 tag=tag,
             )
