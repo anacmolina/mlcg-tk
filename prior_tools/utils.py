@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from typing import List, Tuple
 
-from mlcg.nn.prior import _Prior, Harmonic, Repulsion, Dihedral
+from mlcg.nn.prior import _Prior, Harmonic, Repulsion, Dihedral, Polynomial, QuarticAngles
 
 
 def symmetrized_keys_generator(order: int, emb_max: int = 20) -> List[Tuple]:
@@ -97,6 +97,11 @@ def prior_evaluator(prior_module: _Prior, key: Tuple, x: torch.Tensor) -> torch.
         k2s = [prior_module.k2s[idx][key] for idx in range(prior_module.n_degs)]
         k2s = torch.tensor(k2s).view(1, -1)
         res = prior_module.compute(x.view(1, -1), v_0, k1s, k2s)
+    elif issubclass(type(prior_module), Polynomial):
+        v_0 = prior_module.v_0[key]
+        ks = [prior_module.ks[idx][key] for idx in range(prior_module.n_degs)]
+        ks = torch.tensor(ks).view(1, -1)[0]
+        res = prior_module.compute(x.view(1, -1), ks, v_0)[0] #TODO: Understand what is happening here. why do i have an extra dimension
     else:
         raise ValueError(f"Prior of type {prior_module.__class__} is not supported")
     return res
