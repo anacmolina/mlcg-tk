@@ -1,39 +1,3 @@
-This example is just to demonstrate the usage of the package to transport from AA
-simulations to the input for training an MLCG model. This dataset does not contain enough
-points, nor is it in the right distribution, so that it would create a good CG model.
-
-The dataset is provided under the folder ``./demo_raw_data/``. It contains a readme with
-details of the simulation.
-
-0) Create a directory to output all the intermediate files
-=========================================================
-
-The commands will output a lot of data and its better to save it in a separate directory
-to ensure hygenic file management.
-
-::
-
-   mkdir ./demo_processed_data
-
-1) Loading and processing all-atom simulation data
-==================================================
-
-Command:
-
-::
-
-   mlcg-tk-gen_input_data process_raw_dataset --config configuration_files/trpcage.yaml
-
-   mlcg-tk-gen_input_data build_neighborlists --config configuration_files/trpcage.yaml --config configuration_files/trpcage_priors.yaml
-
-This procedure will loop over all of the sample names specified by the ``names`` option.
-For each instance, it will load the atomistic coordinates, forces, and structures and map
-these to a lower resolution specified in the input file (this allows for various
-resolutions and CG embeddings to be used). Then, using the ``PriorBuilders`` listed in
-``prior_builders``, the script will generate a neighbourlist for each molecule, so long as
-the prior builders are implemented in ``prior_gen.py`` and their specific neighbour list
-builders are implemented in ``mlcg_tk.input_generator.prior_nls``.
-
 Input Training Data Generation Pipeline
 =======================================
 
@@ -67,31 +31,49 @@ Example: 1LY2 toy dataset
 To exemplify the usage of this code, we provide an example on how to load a tiny dataset
 of All-Atom (AA) simulations of a trpcage-variant, 1L2Y.
 
-A trained MLCG model serves as a forcefield for conducting protein simulations. To run
-simulations of a particular system, the command above will process each structure file
-indicated by the ``pdb_fns`` option, map these to the specified CG resolution, generate
-neighbor lists corresponding the the given ``prior_builders``, and save the specified
-number of copies of AtomicData objects storing this information.
 
-In contrast to traditional MD forcefields, machine-learned force fields are designed to
-process data efficiently in batches, making it advantageous to run multiple simulations in
-parallel in order to maximize resource utilization and minimize the cost per trajectory.
+This example is just to demonstrate the usage of the package to transport from AA
+simulations to the input for training an MLCG model. This dataset does not contain enough
+points, nor is it in the right distribution, so that it would create a good CG model.
 
-The ``copies`` option in the configuration file should be carefully selected based on the
-size of the system to ensure efficient memory usage, and may require some testing to
-achieve optimal simulation performance.
+The dataset is provided under the folder ``./demo_raw_data/``. It contains a readme with
+details of the simulation.
 
-For generating a simulation input for the pretrained transferable model provided with the
-manuscript *Navigating protein landscapes with a machine-learned coarse-grained model*,
-use the provided ``transferable_priors.yaml`` in ``configuration_files`` to build an input
-configuration using consistent priors with the ones used in the manuscript. Adapt the
-``trpcage_sim.yaml`` file to the protein sequence to be simulated.
+0) Create a directory to output all the intermediate files
+==========================================================
+
+The commands will output a lot of data and its better to save it in a separate directory
+to ensure hygenic file management.
+
+::
+
+   mkdir ./demo_processed_data
+
+1) Loading and processing all-atom simulation data
+===================================================
+
+Command:
+
+::
+
+   mlcg-tk-gen_input_data process_raw_dataset --config configuration_files/trpcage.yaml
+
+   mlcg-tk-gen_input_data build_neighborlists --config configuration_files/trpcage.yaml --config configuration_files/trpcage_priors.yaml
+
+This procedure will loop over all of the sample names specified by the ``names`` option.
+For each instance, it will load the atomistic coordinates, forces, and structures and map
+these to a lower resolution specified in the input file (this allows for various
+resolutions and CG embeddings to be used). Then, using the ``PriorBuilders`` listed in
+``prior_builders``, the script will generate a neighbor list for each molecule, so long as
+the prior builders are implemented in ``prior_gen.py`` and their specific neighbor list
+builders are implemented in ``mlcg_tk.input_generator.prior_nls``.
+
 
 Keep in mind that the priors are assumed to be in ``[kcal/mol]`` at the fitting stage so
 raw forces should be transformed to ``[kcal/mol/angstrom]``.
 
-Note if you are using a custom dataset
---------------------------------------
+Note if you are using a custom dataset:
+---------------------------------------
 
 If your program gets killed after the loading of the all-atom data succeeded (tqdm bar
 finished) but before ``process_raw_dataset`` saved the CG output, try to set
@@ -144,7 +126,7 @@ debugging capabilities in case individual samples in the dataset produce problem
 statistics.
 
 3) Producing delta forces
-========================
+=========================
 
 Command::
 
@@ -160,12 +142,17 @@ using GPU acceleration:
 
 .. code-block:: bash
 
-   #!/bin/bash #SBATCH --ntasks-per-node=1 #SBATCH --nodes=1 #SBATCH --mem=24G #SBATCH
-   --time=4-00:00:00 #SBATCH --gres=gpu:1 #SBATCH --partition=gpu #SBATCH
-   --output=trpcage_delta_forces_gpu.log #SBATCH --job-name=test_job
+   #!/bin/bash 
+   #SBATCH --ntasks-per-node=1 
+   #SBATCH --nodes=1 
+   #SBATCH --mem=24G 
+   #SBATCH --time=4-00:00:00 
+   #SBATCH --gres=gpu:1 
+   #SBATCH --partition=gpu 
+   #SBATCH --output=trpcage_delta_forces_gpu.log 
+   #SBATCH --job-name=test_job
 
-   mlcg-tk-produce_delta_forces produce_delta_forces --config
-   configuration_files/trpcage_delta_forces.yaml
+   mlcg-tk-produce_delta_forces produce_delta_forces --config configuration_files/trpcage_delta_forces.yaml
 
 Here, make sure to specify ``cuda`` for the ``device`` option in the configuration file.
 Note that depending on the GPU being used and its available memory, it may be necessary to
