@@ -40,7 +40,7 @@ def process_sim_input(
     collection_cls: Type[SampleCollection] = SampleCollection,
     smpl_loader: Type[DatasetLoader] = SimInput_loader,
 ):
-    """
+    r"""
     Generates input AtomicData objects for coarse-grained simulations
 
     Parameters
@@ -133,11 +133,11 @@ def process_sim_input(
         f"{save_dir}{get_output_tag([dataset_name, tag], placement='before')}configurations.pt",
     )
 
+
 def main():
     print("Start gen_sim_input.py: {}".format(ctime()))
     CLI([process_sim_input])
     print("Finish gen_sim_input.py: {}".format(ctime()))
-
 
 
 if __name__ == "__main__":

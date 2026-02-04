@@ -206,7 +206,7 @@ def compute_hist_with_keys(
 
     if unique_keys_in_data.numel() == 0:
         return histograms
-    
+
     n_unique_keys = unique_keys_in_data.shape[1]
 
     bins = torch.linspace(
@@ -215,8 +215,8 @@ def compute_hist_with_keys(
 
     for idx in range(n_unique_keys):
         mask = inverse_indices == idx
-#        print(f"Shape of values: {values.shape}, shape of mask: {mask.shape}")
-#        print(f"Mask first 10 values: {mask[:10]}")
+        #        print(f"Shape of values: {values.shape}, shape of mask: {mask.shape}")
+        #        print(f"Mask first 10 values: {mask[:10]}")
         if not mask.any():
             continue
 
@@ -241,6 +241,7 @@ def compute_hist_with_keys(
 
     return histograms
 
+
 def compute_hist_with_rep(
     values: torch.Tensor,
     key_dict: dict,
@@ -251,7 +252,7 @@ def compute_hist_with_rep(
 ) -> Dict:
     """
     Compute histograms using precomputed unique keys for this nl_name.
-    
+
     Parameters
     ----------
     values : torch.Tensor
@@ -271,7 +272,7 @@ def compute_hist_with_rep(
     """
     order = key_dict["order"]
     unique_keys_in_data = key_dict["unique_keys_in_data"]
-    
+
     # Expand inverse indices for the batch
     inverse_indices_template = key_dict["inverse_indices"]
     if inverse_indices_template.numel() == 0:
@@ -279,11 +280,11 @@ def compute_hist_with_rep(
     else:
         repeat_factor = values.shape[0] // inverse_indices_template.shape[0]
         inverse_indices = inverse_indices_template.repeat(repeat_factor)
-    
+
     histograms = {}
     if unique_keys_in_data.numel() == 0:
         return histograms
-    
+
     n_unique_keys = unique_keys_in_data.shape[1]
 
     bins = torch.linspace(
@@ -292,12 +293,12 @@ def compute_hist_with_rep(
 
     for idx in range(n_unique_keys):
         mask = inverse_indices == idx
-        
+
         if not mask.any():
             continue
 
         val = values[mask]
-        
+
         if isinstance(weights, torch.Tensor):
             # Weights are per structure, need to tile for all interactions
             n_atomgroups = int(val.shape[0] / weights.shape[0])
@@ -314,6 +315,7 @@ def compute_hist_with_rep(
         histograms[kf] = deepcopy(hist.cpu().numpy())
 
     return histograms
+
 
 def compute_hist(
     values: torch.Tensor,
