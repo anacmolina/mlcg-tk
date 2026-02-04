@@ -1,6 +1,8 @@
 mlcg-tk
 =======
 
+.. start-readme
+
 A collection of tools for processing raw simulation data for use in training a 
 transferable coarse grained (CG) forcefield, using the MLCG library.
 
@@ -17,6 +19,8 @@ Once mlcg is installed, you can install mlcg-tk as follows::
   git clone git@github.com:ClementiGroup/mlcg-tk.git
   cd mlcg-tk
   pip install .
+
+.. end-readme
 
 How to use
 ----------

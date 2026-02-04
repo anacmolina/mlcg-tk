@@ -40,7 +40,7 @@ def process_sim_input(
     collection_cls: Type[SampleCollection] = SampleCollection,
     smpl_loader: Type[DatasetLoader] = SimInput_loader,
 ):
-    """
+    r"""
     Generates input AtomicData objects for coarse-grained simulations
 
     Parameters
