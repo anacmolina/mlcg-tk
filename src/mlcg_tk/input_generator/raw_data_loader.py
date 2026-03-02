@@ -1550,7 +1550,7 @@ class WaterMethaneLoader(DatasetLoader):
         aa_coords = np.concatenate(aa_coord_list)
         aa_forces = np.concatenate(aa_force_list)
         return aa_coords, aa_forces
-    
+
 
 class WRC_loader(DatasetLoader):
     """
