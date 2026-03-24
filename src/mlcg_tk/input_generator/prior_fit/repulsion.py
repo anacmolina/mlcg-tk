@@ -76,8 +76,19 @@ def fit_repulsion_from_values(
         `scipy.optimize.curve_fit`
     """
     values = np.repeat(bin_centers_nz.numpy(), ncounts_nz.int().numpy())
-    if cutoff != None:
-        values = values[values < cutoff]
-    sigma = torch.tensor(np.percentile(values, percentile))
-    stat = {"sigma": sigma}
-    return stat
+
+    if len(values) == 0:
+        
+        sigma = torch.tensor(0)
+        stat = {"sigma": sigma}
+
+        return stat
+    
+    else:
+
+        if cutoff != None:
+            values = values[values < cutoff]
+    
+        sigma = torch.tensor(np.percentile(values, percentile))
+        stat = {"sigma": sigma}
+        return stat
