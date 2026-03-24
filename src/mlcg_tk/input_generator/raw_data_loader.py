@@ -1375,16 +1375,19 @@ class WRC_loader(DatasetLoader):
         h5_coords_fns = natsorted(glob(f"{base_dir}/{name}_coords_dataset.h5"))
         h5_forces_fns = natsorted(glob(f"{base_dir}/{name}_forces_dataset.h5"))
 
+        print(h5_coords_fns)
+        print(h5_forces_fns)
+
         h5_coords = h5py.File(h5_coords_fns[0], "r")
         h5_forces = h5py.File(h5_forces_fns[0], "r")
 
         aa_coords = None
         aa_forces = None
 
-        if n_batches != 15:
+        if n_batches > 15:
 
             raise NotImplementedError(
-                "The WRC_loader is only implemented for a fixed number of batches of 15."
+                "The WRC_loader is only implemented for a max number of 15 independent batches."
             )
 
             # TODO: Add n_batches implementation
