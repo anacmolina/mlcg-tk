@@ -18,6 +18,7 @@ def merge_statistics(
     names: List[str],
     tag: Optional[str] = None,
     mol_num_batches: Optional[int] = 1,
+    merge_tag: Optional[str] = None,
 ):
     """
     Merges statistics computed for separate datasets or for individual samples of the same dataset.
@@ -55,7 +56,7 @@ def merge_statistics(
 
     fnout = osp.join(
         save_dir,
-        f"{get_output_tag([tag, prior_tag], placement='before')}prior_builders.pck",
+        f"{get_output_tag([merge_tag, tag, prior_tag], placement='before')}prior_builders.pck",
     )
     builder_dict = {}
     for prior_builder in prior_builders:
