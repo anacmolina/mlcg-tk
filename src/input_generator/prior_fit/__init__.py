@@ -15,4 +15,8 @@ from mlcg_tk.input_generator.prior_fit.polynomial import (
     fit_polynomial_from_potential_estimates,
     polynomial_wrapper_fit_func,
 )
+from mlcg_tk.input_generator.prior_fit.restricted_bending import (
+    fit_rb_from_potential_estimates,
+    restricted_quartic_angle,
+)
 from mlcg_tk.input_generator.prior_fit.histogram import HistogramsNL
