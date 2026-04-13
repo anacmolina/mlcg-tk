@@ -656,7 +656,11 @@ class SampleCollection:
             return True
 
     def has_delta_forces_output(
-        self, training_data_dir: str, force_tag: str = "", mol_num_batches: int = 1, keep_batches: bool = False
+        self,
+        training_data_dir: str,
+        force_tag: str = "",
+        mol_num_batches: int = 1,
+        keep_batches: bool = False,
     ) -> bool:
         """
         Returns True if cg data exists for this SampleCollection
@@ -687,9 +691,15 @@ class SampleCollection:
         #     raise ValueError(
         #         f"`mol_num_batches` should be a positive integer, not {mol_num_batches}"
         #     )
-        pos_names_lists = [[self.tag, self.name]] # Check only the presence of that specific batch or molecule
-        if mol_num_batches > 1 and not keep_batches: # Then, check for the presence of all the batches
-            pos_names_lists = [[self.tag, f"{self.mol_name}_batch_{i}"] for i in range(mol_num_batches)]
+        pos_names_lists = [
+            [self.tag, self.name]
+        ]  # Check only the presence of that specific batch or molecule
+        if (
+            mol_num_batches > 1 and not keep_batches
+        ):  # Then, check for the presence of all the batches
+            pos_names_lists = [
+                [self.tag, f"{self.mol_name}_batch_{i}"] for i in range(mol_num_batches)
+            ]
         for bat_list in pos_names_lists:
             save_templ = os.path.join(
                 training_data_dir,
@@ -792,12 +802,12 @@ class SampleCollection:
         return batch_list
 
     def load_training_inputs(
-        self, 
-        training_data_dir: str, 
-        force_tag: str = "", 
+        self,
+        training_data_dir: str,
+        force_tag: str = "",
         mol_num_batches: int = 1,
         keep_batches: bool = False,
-        stride: int = 1
+        stride: int = 1,
     ) -> Tuple:
         """
         Loads all cg data produced by `save_cg_output` and `get_prior_nls`
@@ -827,12 +837,15 @@ class SampleCollection:
             for b in range(mol_num_batches):
                 save_templ = os.path.join(
                     training_data_dir,
-                    get_output_tag([self.tag, self.mol_name, f"batch_{b}"], placement="before"),
+                    get_output_tag(
+                        [self.tag, self.mol_name, f"batch_{b}"], placement="before"
+                    ),
                 )
                 save_templ_forces = os.path.join(
                     training_data_dir,
                     get_output_tag(
-                        [self.tag, self.mol_name, f"batch_{b}", force_tag], placement="before"
+                        [self.tag, self.mol_name, f"batch_{b}", force_tag],
+                        placement="before",
                     ),
                 )
 
