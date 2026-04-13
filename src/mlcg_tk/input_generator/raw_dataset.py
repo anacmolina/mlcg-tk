@@ -671,7 +671,7 @@ class SampleCollection:
         ----------
         training_data_dir:
             Location of saved cg data
-        prior_tag:
+        force_tag:
             String identifying the specific combination of prior terms
         mol_num_batches : int
             number of batches in which the molecule is suposed to be saved
@@ -681,16 +681,7 @@ class SampleCollection:
         True if cg output for the sample corresponding to prior_tag is present in training_data_dir
         False otherwise
         """
-        # if mol_num_batches == 1:
-        #     pos_names_lists = [[self.tag, self.name]]
-        # elif mol_num_batches > 1:
-        #     pos_names_lists = [
-        #         [self.tag, self.name, f"batch_{b}"] for b in range(mol_num_batches)
-        #     ]
-        # else:
-        #     raise ValueError(
-        #         f"`mol_num_batches` should be a positive integer, not {mol_num_batches}"
-        #     )
+
         pos_names_lists = [
             [self.tag, self.name]
         ]  # Check only the presence of that specific batch or molecule

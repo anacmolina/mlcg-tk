@@ -103,7 +103,7 @@ def package_training_data(
                 ):
                     continue
                 else:
-                    if mol_num_batches and not keep_batches:
+                    if mol_num_batches > 1 and not keep_batches:
                         non_empty_names.append(samples.mol_name)
                     else:
                         non_empty_names.append(samples.name)
