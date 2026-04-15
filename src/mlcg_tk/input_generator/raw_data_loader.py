@@ -249,9 +249,7 @@ class DIMER_loader(DatasetLoader):
         pdb_fn:
             Path to pdb structure file
         """
-        pdb_fn = glob(pdb_fn.format(name))[0]
-        print(f"Loading topology from {pdb_fn}")
-        pdb = md.load(pdb_fn)
+        pdb = md.load(pdb_fn.format(name))
         aa_traj = pdb.atom_slice(
             [a.index for a in pdb.topology.atoms if a.residue.is_protein]
         )
