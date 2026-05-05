@@ -195,8 +195,8 @@ class Non_Bonded:
         graph = nx.Graph(conn_mat)
         csgraph = nx.to_scipy_sparse_array(graph, format="csr")
 
-        # Compute graph shortest distances and store them in a dense matrix. 
-        # Diagonal values should be 0, and dists[i, j] is np.inf if i and j 
+        # Compute graph shortest distances and store them in a dense matrix.
+        # Diagonal values should be 0, and dists[i, j] is np.inf if i and j
         # are in different connected components
         dists = shortest_path(
             csgraph,
@@ -210,7 +210,7 @@ class Non_Bonded:
 
         # No non-self edges (use out kwarg for memory efficiency)
         np.logical_and(mask, conn_mat == 0, out=mask)
-        
+
         # Minimum graph distance
         np.logical_and(mask, dists >= min_pair - 1, out=mask)
 
@@ -226,14 +226,17 @@ class Non_Bonded:
 
         # From boolean mask to nonzero indices
         edges_to_consider = torch.from_numpy(np.array(np.nonzero(mask)))
-        edges_to_consider = _symmetrise_distance_interaction(edges_to_consider).numpy().T
+        edges_to_consider = (
+            _symmetrise_distance_interaction(edges_to_consider).numpy().T
+        )
         pairs_parsed = []
         for p in edges_to_consider:
             if (
-                (abs(
+                abs(
                     topology.atom(p[0]).residue.index
                     - topology.atom(p[1]).residue.index
-                ) >= res_exclusion)
+                )
+                >= res_exclusion
             ):
                 pairs_parsed.append(p)
         pairs_parsed = np.array(pairs_parsed)
