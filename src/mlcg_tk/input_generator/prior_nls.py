@@ -210,9 +210,9 @@ class Non_Bonded:
 
         # No non-self edges (use out kwarg for memory efficiency)
         np.logical_and(mask, conn_mat == 0, out=mask)
-
+        
         # Minimum graph distance
-        np.logical_and(mask, dists >= min_pair + 1, out=mask)
+        np.logical_and(mask, dists >= min_pair - 1, out=mask)
 
         # Not among bond edges
         bond_edges_mask = np.zeros_like(mask)
