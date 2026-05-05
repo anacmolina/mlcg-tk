@@ -28,6 +28,7 @@ def symmetrized_keys_generator(order: int, emb_max: int = 20) -> List[Tuple]:
     else:
         raise ValueError(f"Not implemente for order {order}")
 
+
 def get_nonzero_keys(prior_module: _Prior) -> torch.Tensor:
     r"""
     Function to extract the key combinations of a prior that have a non-zero value for the parameters.

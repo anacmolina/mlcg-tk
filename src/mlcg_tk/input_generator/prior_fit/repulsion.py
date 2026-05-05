@@ -52,7 +52,7 @@ def fit_repulsion_from_values(
     ncounts_nz: torch.Tensor,
     percentile: float,
     cutoff: Optional[float] = None,
-    **kwargs
+    **kwargs,
 ) -> Dict:
     """Method for fitting interaction parameters directly from input features
 
