@@ -20,4 +20,3 @@ from mlcg_tk.input_generator.prior_fit.restricted_bending import (
     restricted_quartic_angle,
 )
 from mlcg_tk.input_generator.prior_fit.histogram import HistogramsNL
-
