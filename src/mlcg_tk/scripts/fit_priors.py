@@ -43,6 +43,7 @@ def compute_statistics(
     save_sample_statistics: bool = False,
     weights_template_fn: Optional[str] = None,
     mol_num_batches: Optional[int] = 1,
+    list_skip_nl_names: Optional[List[str]] = None,
 ):
     """
     Computes structural features and accumulates statistics on dataset samples
@@ -80,6 +81,8 @@ def compute_statistics(
     mol_num_batches : int
         If greater than 1, will save each molecule data into the specified number of batches
         that will be treated as different samples
+    list_skip_nl_names: List[str]
+        List of neighbor list names to skip when accumulating statistics. 
     """
 
     all_nl_names = set()
@@ -93,7 +96,14 @@ def compute_statistics(
     tmp_batch = dataset[0].load_cg_output_into_batches(
         save_dir, prior_tag, 1, 1, weights_template_fn=weights_template_fn
     )[0]
+    
     nl_names = set(tmp_batch.neighbor_list.keys())
+    
+    if list_skip_nl_names is not None:
+        for nl_name in list_skip_nl_names:
+            print(f"Skipping NL name '{nl_name}' as specified in list_skip_nl_names")
+            nl_names.remove(nl_name)
+
     assert nl_names.issubset(
         all_nl_names
     ), f"some of the NL names '{nl_names}' in {dataset_name}:{tmp_batch.name} have not been registered in the nl_builder '{all_nl_names}'"
@@ -124,6 +134,10 @@ def compute_statistics(
             weights_template_fn=weights_template_fn,
         )
         nl_names = set(batch_list[0].neighbor_list.keys())
+        if list_skip_nl_names is not None:
+            for nl_name in list_skip_nl_names:
+                print(f"Skipping NL name '{nl_name}' as specified in list_skip_nl_names")
+                nl_names.remove(nl_name)
         assert nl_names.issubset(
             all_nl_names
         ), f"some of the NL names '{nl_names}' in {dataset_name}:{samples.name} have not been registered in the nl_builder '{all_nl_names}'"
@@ -165,6 +179,13 @@ def compute_statistics(
         for batch in tqdm(batch_list, f"molecule name: {samples.name}", leave=False):
             batch = batch.to(device)
             for nl_name in nl_names:
+                #print("nl_name:", nl_name)
+                #print("nl_names_key_list[nl_name]:", nl_names_key_list[nl_name])
+                #print("nl_names_key_list[nl_name] shape:", len(nl_names_key_list[nl_name]))
+                #print("nl_names_key_list[nl_name] unique_keys_in_data shape:", nl_names_key_list[nl_name]["unique_keys_in_data"].shape)
+                #print("nl_names_key_list[nl_name] unique_keys_in_data:", nl_names_key_list[nl_name].keys())
+                #print("nl_names_key_list[nl_name] inverse_indices shape:", nl_names_key_list[nl_name]["inverse_indices"].shape)
+                #print("nl_names batch size:", batch.size)
                 prior_builder = nl_name2prior_builder[nl_name]
                 prior_builder.accumulate_statistics(
                     nl_name, batch, nl_names_key_list[nl_name]
