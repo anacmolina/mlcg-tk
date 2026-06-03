@@ -179,13 +179,6 @@ def compute_statistics(
         for batch in tqdm(batch_list, f"molecule name: {samples.name}", leave=False):
             batch = batch.to(device)
             for nl_name in nl_names:
-                #print("nl_name:", nl_name)
-                #print("nl_names_key_list[nl_name]:", nl_names_key_list[nl_name])
-                #print("nl_names_key_list[nl_name] shape:", len(nl_names_key_list[nl_name]))
-                #print("nl_names_key_list[nl_name] unique_keys_in_data shape:", nl_names_key_list[nl_name]["unique_keys_in_data"].shape)
-                #print("nl_names_key_list[nl_name] unique_keys_in_data:", nl_names_key_list[nl_name].keys())
-                #print("nl_names_key_list[nl_name] inverse_indices shape:", nl_names_key_list[nl_name]["inverse_indices"].shape)
-                #print("nl_names batch size:", batch.size)
                 prior_builder = nl_name2prior_builder[nl_name]
                 prior_builder.accumulate_statistics(
                     nl_name, batch, nl_names_key_list[nl_name]
