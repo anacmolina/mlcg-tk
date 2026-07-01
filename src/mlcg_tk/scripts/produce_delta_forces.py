@@ -59,7 +59,6 @@ def produce_delta_forces(
     names: List[str],
     tag: str,
     save_dir: str,
-    load_dir: str,
     prior_tag: str,
     prior_fn: str,
     device: str,
@@ -81,8 +80,6 @@ def produce_delta_forces(
         Label given to all output files produced from dataset
     save_dir : str
         Path to directory from which the output will be saved
-    load_dir : str
-        Path to directory from which input will be loaded
     prior_tag : str
         String identifying the specific combination of prior terms
     prior_fn : str
@@ -104,10 +101,10 @@ def produce_delta_forces(
     for samples in tqdm(
         dataset, f"Processing delta forces for {dataset_name} dataset..."
     ):
-        if not samples.has_saved_cg_output(load_dir, prior_tag):
+        if not samples.has_saved_cg_output(save_dir, prior_tag):
             continue
         coords, forces, embeds, pdb, prior_nls = samples.load_cg_output(
-            save_dir=load_dir, prior_tag=prior_tag
+            save_dir=save_dir, prior_tag=prior_tag
         )
 
         num_frames = coords.shape[0]
