@@ -1411,6 +1411,7 @@ class MHC_loader(DatasetLoader):
         forces_all = np.concatenate(forces_all)
         return coords_all, forces_all
 
+
 class BBA_amber_loader(DatasetLoader):
     """
     Loader object for dataset of BBA simulations run with the AMBER99SB-ILDNP force field
