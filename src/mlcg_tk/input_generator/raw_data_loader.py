@@ -249,7 +249,16 @@ class DIMER_loader(DatasetLoader):
         pdb_fn:
             Path to pdb structure file
         """
-        pdb = md.load(pdb_fn.format(name))
+        pdb_fns = glob(pdb_fn.format(name))
+        if len(pdb_fns) == 1:
+            pdb = md.load(pdb_fns[0])
+        elif len(pdb_fns) > 1:
+            warnings.warn(
+                f"Pattern {pdb_fn.format(name)} has more than one result",
+                category=UserWarning,
+            )
+        else:
+            return None, None
         aa_traj = pdb.atom_slice(
             [a.index for a in pdb.topology.atoms if a.residue.is_protein]
         )
