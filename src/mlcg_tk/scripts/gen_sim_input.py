@@ -73,7 +73,7 @@ def process_sim_input(
         Optional scaling factor applied to atomic masses
     collection_cls : Type[SampleCollection]
         Class type for sample collection
-    smpl_loader : Type[DatasetLoader]
+    sample_loader : Type[DatasetLoader]
         Loader class for dataset
     """
     cg_coord_list = []
@@ -83,8 +83,8 @@ def process_sim_input(
 
     dataset = SimInput(dataset_name, tag, pdb_fns, collection_cls=collection_cls)
     for samples in tqdm(dataset, f"Processing CG data for {dataset_name} dataset..."):
-        sample_loader = sample_loader()
-        samples.input_traj, samples.top_dataframe = sample_loader.get_traj_top(
+        smpl_loader = sample_loader()
+        samples.input_traj, samples.top_dataframe = smpl_loader.get_traj_top(
             name=samples.name, raw_data_dir=raw_data_dir
         )
         samples.apply_cg_mapping(
