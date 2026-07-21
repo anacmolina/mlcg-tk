@@ -44,7 +44,7 @@ def create_xtc_file(npy_fns_path: str,
         
         xyz = np.load(npy_fn)
 
-        if xyz.shape[0] == 4:
+        if len(xyz.shape) == 4:
             
             if itraj is None:
                 raise ValueError("There is more than one trajectory in the file, therefore, itraj can not be None, please specify the i-th trajectory.")
