@@ -1559,3 +1559,79 @@ class WaterMethaneLoader(DatasetLoader):
         aa_coords = np.concatenate(aa_coord_list)
         aa_forces = np.concatenate(aa_force_list)
         return aa_coords, aa_forces
+
+
+class CATH2_loader(DatasetLoader):
+    """
+    Loader object for extended dataset of CATH domain proteins
+    """
+
+    def get_traj_top(self, name: str, pdb_fn: str):
+        """
+        For a given CATH domain name, returns a loaded MDTraj object at the input resolution
+        (generally atomistic) as well as the dataframe associated with its topology.
+
+        Parameters
+        ----------
+        name:
+            Name of input sample
+        pdb_fn:
+            Path to pdb structure file
+        """
+
+        pdb = md.load(pdb_fn.format(name))
+        aa_traj = pdb.atom_slice(
+            [a.index for a in pdb.topology.atoms if a.residue.is_protein]
+        )
+        top_dataframe = aa_traj.topology.to_dataframe()[0]
+        return aa_traj, top_dataframe
+
+    def load_coords_forces(
+        self, base_dir: str, name: str, topology: Union[md.Topology, md.Trajectory, str], stride: int = 1
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        For a given CATH domain name, returns np.ndarray's of its coordinates and forces at
+        the input resolution (generally atomistic)
+
+        Parameters
+        ----------
+        base_dir:
+            Path to coordinate and force files
+        name:
+            Name of input sample
+        topology:
+            MDTraj Topology object corresponding to given protein
+        stride : int
+            Interval by which to stride loaded data
+        """
+
+        if isinstance(topology, str):
+            top = md.load(topology).topology
+        elif isinstance(topology, md.Trajectory):
+            top = topology.topology
+        elif isinstance(topology, md.Topology):
+            top = topology
+        else:
+            raise ValueError(f"Supplied topology is of the type {type(topology)} which is not supported. Please provide one of: md.Topology, md.Trajectory, path_to_topology")
+
+        coords_fns = sorted(glob(os.path.join(base_dir, f"cath2_{name}/trajs/run*_protein.xtc")))
+
+        aa_coords_list = []
+        aa_forces_list = []
+
+        for c_fn in coords_fns:
+            f_fn = c_fn[:-11]+"forces.xtc"
+            try:
+                coords = md.load_xtc(c_fn, top).xyz
+                forces = md.load_xtc(f_fn, top).xyz
+                assert coords.shape == forces.shape
+            except Exception as e:
+                print(e)
+                continue
+            coords = 10.0 * coords  # convert nm to angstroms
+            forces = forces / 41.84  # convert to from kJ/mol/nm to kcal/mol/ang
+            aa_coords_list.append(coords)
+            aa_forces_list.append(forces)
+        aa_coords = np.concatenate(aa_coords_list)[::stride]
+        aa_forces = np.concatenate(aa_forces_list)[::stride]
+        return aa_coords, aa_forces
