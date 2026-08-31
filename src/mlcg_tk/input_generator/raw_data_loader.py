@@ -3,7 +3,7 @@ import os
 from natsort import natsorted
 from glob import glob
 import h5py
-from typing import Tuple, Optional, List
+from typing import Tuple, Optional, List, Union
 import mdtraj as md
 import warnings
 from pathlib import Path
