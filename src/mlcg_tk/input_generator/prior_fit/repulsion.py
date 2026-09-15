@@ -4,6 +4,8 @@ from scipy.integrate import trapezoid
 from scipy.optimize import curve_fit
 import numpy as np
 
+import pygad
+
 
 def repulsion(x, sigma):
     """Method defining the repulsion interaction"""
@@ -80,4 +82,76 @@ def fit_repulsion_from_values(
         values = values[values < cutoff]
     sigma = torch.tensor(np.percentile(values, percentile))
     stat = {"sigma": sigma}
+    return stat
+
+def exp_repulsion(x, alpha, r_0):
+    """Method defining the repulsion interaction"""
+    rr = 1 - (x / r_0)
+    return (6 / alpha) * np.exp( alpha * rr)
+
+def interpolation_crossover(parents, offspring_size, ga_instance):
+    offspring = []
+    idx = 0
+    while len(offspring) != offspring_size[0]:
+        parent1 = parents[idx % parents.shape[0], :].copy()
+        parent2 = parents[(idx + 1) % parents.shape[0], :].copy()
+
+        new_offspring = 0.5*(parent1+parent2)
+        offspring.append(new_offspring)
+
+        idx += 1
+
+    return np.array(offspring)
+
+def fit_exp_repulsion_using_genetic_algorithm(
+    bin_centers_nz: torch.Tensor, 
+    dG_nz: torch.Tensor,
+    #TODO: Fix this parameter, it is not necessary
+    ncounts_nz: torch.Tensor, 
+    repulsion_function: callable=exp_repulsion,
+    iters:int=500
+) -> Dict:
+    
+    integral = torch.tensor(
+        float(trapezoid(dG_nz.cpu().numpy(), bin_centers_nz.cpu().numpy()))
+    )
+    mask = torch.abs(dG_nz) > 1e-8 * torch.abs(integral)
+    xs = bin_centers_nz[mask],
+    ys = dG_nz[mask],
+
+    def fitness_func(ga_instance, solution, solution_idx):
+        new_ys = repulsion_function(xs,solution[0],solution[1])
+        fitness = 1.0 / np.linalg.norm(ys-new_ys)
+        return fitness
+    
+    num_generations = iters
+    num_parents_mating = 20
+    fitness_function = fitness_func
+    sol_per_pop = 80
+    num_genes = 2
+    init_range_low = 1
+    init_range_high = 10
+    parent_selection_type = "sss"
+    keep_parents = 0
+
+    mutation_type = "random"
+    mutation_percent_genes = 50
+    ga_instance = pygad.GA(num_generations=num_generations,
+                       num_parents_mating=num_parents_mating,
+                       fitness_func=fitness_function,
+                       sol_per_pop=sol_per_pop,
+                       num_genes=num_genes,
+                       init_range_low=init_range_low,
+                       init_range_high=init_range_high,
+                       parent_selection_type=parent_selection_type,
+                       keep_parents=keep_parents,
+                       crossover_type=interpolation_crossover,
+                       mutation_type=mutation_type,
+                       mutation_percent_genes=mutation_percent_genes,
+                       parallel_processing=None)
+    ga_instance.run()
+    solution, solution_fitness, solution_idx = ga_instance.best_solution()
+
+    stat = {"alpha": solution[0], "r_0": solution[1]}
+
     return stat

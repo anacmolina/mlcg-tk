@@ -10,6 +10,7 @@ from mlcg.nn.prior import (
     _Prior,
     GeneralBonds,
     GeneralAngles,
+    ExpRepulsion
 )
 from mlcg.nn.gradients import GradientsOut
 
@@ -325,8 +326,14 @@ class NonBonded(PriorBuilder):
         prior_fit_fn: Callable,
         percentile: float = 1,
         cutoff: Optional[float] = None,
+        prior_cls=Repulsion
     ) -> None:
-        prior_fit_fn = partial(prior_fit_fn, percentile=percentile, cutoff=cutoff)
+        if prior_cls == Repulsion:
+            prior_fit_fn = partial(prior_fit_fn, percentile=percentile, cutoff=cutoff)
+        elif prior_cls == ExpRepulsion:
+            prior_fit_fn = partial(prior_fit_fn)
+        else:
+            raise ValueError(f"prior_cls must be either Repulsion or ExpRepulsion, got {prior_cls}")
         super().__init__(
             histograms=HistogramsNL(
                 n_bins=n_bins,
@@ -335,7 +342,7 @@ class NonBonded(PriorBuilder):
             ),
             nl_builder=nl_builder,
             prior_fit_fn=prior_fit_fn,
-            prior_cls=Repulsion,
+            prior_cls=prior_cls,
         )
         self.name = name
         self.type = "non_bonded"
@@ -394,9 +401,9 @@ class NonBonded(PriorBuilder):
             of the gradient properties referenced in `mlcg.data._keys`.
             At the moment only forces are implemented.
         """
-        prior = self.prior_cls(statistics)
-        prior.name = name
-        return GradientsOut(prior, targets=targets)
+
+        #TODO: To ADD name the mlcg.nn.prior.ExpRepulsion class needs to be modified
+        return GradientsOut(self.prior_cls(statistics), targets=targets)
 
 
 class Dihedrals(PriorBuilder):
