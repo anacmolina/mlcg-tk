@@ -66,6 +66,8 @@ from mlcg_tk.input_generator.prior_fit import (
     fit_repulsion_from_potential_estimates,
     fit_repulsion_from_values,
     repulsion,
+    fit_exp_repulsion_using_genetic_algorithm,
+    exp_repulsion
 )
 from mlcg_tk.input_generator.prior_fit.fit_potentials import fit_potentials
 from mlcg_tk.input_generator.prior_fit import (
