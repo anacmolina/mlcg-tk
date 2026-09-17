@@ -5,6 +5,8 @@ from scipy.optimize import curve_fit
 import numpy as np
 
 import pygad
+from scipy.signal import savgol_filter
+from mlcg_tk.prior_tools.utils import optimal_offset
 
 
 def repulsion(x, sigma):
@@ -107,21 +109,43 @@ def fit_exp_repulsion_using_genetic_algorithm(
     bin_centers_nz: torch.Tensor, 
     dG_nz: torch.Tensor,
     #TODO: Fix this parameter, it is not necessary
-    ncounts_nz: torch.Tensor, 
+    ncounts_nz: torch.Tensor,
+    cutoff: float = 15, 
     repulsion_function: callable=exp_repulsion,
     iters:int=500
 ) -> Dict:
-    
+
+    dG_nz_all = dG_nz.clone()
+
+    dG_nz = dG_nz_all-dG_nz_all[-1]
+    dG_nz = torch.tensor(savgol_filter(dG_nz,window_length=5,polyorder=3))
+
+    mask = (bin_centers_nz < cutoff) if cutoff != None else torch.ones_like(bin_centers_nz).bool()
+    polyfit = np.polyfit(bin_centers_nz[mask], dG_nz[mask], deg=4)
+    critical_points = quartic_points_all(polyfit, bin_centers_nz[0], bin_centers_nz[-1])
+    sanitized_inflections = [a[0] for a in critical_points["minima"]] + [a[0] for a in critical_points["inflections"]]
+    sanitized_inflections = np.sort(sanitized_inflections)
+
+    if len(sanitized_inflections) > 0:
+        lowest_inflection = min(sanitized_inflections)
+        new_mask = (bin_centers_nz < lowest_inflection)
+    else:
+        new_mask = mask
+        
     integral = torch.tensor(
-        float(trapezoid(dG_nz.cpu().numpy(), bin_centers_nz.cpu().numpy()))
+        float(trapezoid(dG_nz.cpu().numpy()[new_mask], bin_centers_nz.cpu().numpy()[new_mask]))
     )
-    mask = torch.abs(dG_nz) > 1e-8 * torch.abs(integral)
-    xs = bin_centers_nz[mask],
-    ys = dG_nz[mask],
+
+    mask = torch.abs(dG_nz[new_mask]) > 1e-8 * torch.abs(integral)
+    xs = bin_centers_nz[new_mask][mask]
+    ys = dG_nz[new_mask][mask]
+
+    #print("Number of filtered bin centers: ", len(xs))
 
     def fitness_func(ga_instance, solution, solution_idx):
         new_ys = repulsion_function(xs,solution[0],solution[1])
-        fitness = 1.0 / np.linalg.norm(ys-new_ys)
+        offset = optimal_offset(new_ys.numpy(), ys.numpy())
+        fitness = 1.0 / np.linalg.norm(ys-(new_ys-offset))
         return fitness
     
     num_generations = iters
@@ -129,8 +153,7 @@ def fit_exp_repulsion_using_genetic_algorithm(
     fitness_function = fitness_func
     sol_per_pop = 80
     num_genes = 2
-    init_range_low = 1
-    init_range_high = 10
+    gene_space = [{'low': 2, 'high': 110}, {'low': 3.5, 'high': 5.0}]
     parent_selection_type = "sss"
     keep_parents = 0
 
@@ -141,8 +164,7 @@ def fit_exp_repulsion_using_genetic_algorithm(
                        fitness_func=fitness_function,
                        sol_per_pop=sol_per_pop,
                        num_genes=num_genes,
-                       init_range_low=init_range_low,
-                       init_range_high=init_range_high,
+                       gene_space=gene_space,
                        parent_selection_type=parent_selection_type,
                        keep_parents=keep_parents,
                        crossover_type=interpolation_crossover,
@@ -153,5 +175,65 @@ def fit_exp_repulsion_using_genetic_algorithm(
     solution, solution_fitness, solution_idx = ga_instance.best_solution()
 
     stat = {"alpha": solution[0], "r_0": solution[1]}
+    #print("Best solution parameters: ", stat)
 
     return stat
+
+
+def quartic_points_all(coeffs, a, b, tol=1e-10):
+    """
+    coeffs: [c4,c3,c2,c1,c0] for p(x)=c4 x^4 + ... + c0
+    returns: dict with lists of (x, p(x)) for all local minima/maxima and inflection points in [a,b]
+    """
+    a, b = (a, b) if a <= b else (b, a)
+
+    p = np.poly1d(coeffs)
+    dp = p.deriv(1)
+    ddp = p.deriv(2)
+
+    def real_roots_in_interval(poly):
+        roots = np.roots(poly)
+        xs = []
+        for r in roots:
+            if abs(r.imag) <= tol:
+                x = float(r.real)
+                if a - tol <= x <= b + tol:
+                    xs.append(x)
+        # deduplicate (important if a root has multiplicity)
+        xs = sorted(set(np.round(xs, 14)))
+        return [float(x) for x in xs]
+
+    # 1) All critical points (dp=0)
+    crit_x = real_roots_in_interval(dp)
+
+    minima = []
+    maxima = []
+    saddles = []  # degenerate stationary points if any
+
+    for x in crit_x:
+        y = float(p(x))
+        s2 = float(ddp(x))
+        if s2 > tol:
+            minima.append((x, y))
+        elif s2 < -tol:
+            maxima.append((x, y))
+        else:
+            saddles.append((x, y))
+
+    # 2) All inflection points (ddp=0, with concavity change check)
+    infl_x = real_roots_in_interval(ddp)
+    inflections = []
+    for x in infl_x:
+        # check sign change of ddp around x -> true inflection
+        eps = max(1e-6, 1e-6 * (b - a))
+        xl = max(a, x - eps)
+        xr = min(b, x + eps)
+        if float(ddp(xl)) * float(ddp(xr)) < 0:
+            inflections.append((x, float(p(x))))
+
+    return {
+        "minima": minima,          # ALL local minima in [a,b]
+        "maxima": maxima,          # ALL local maxima in [a,b]
+        "inflections": inflections,
+        "stationary_flat": saddles # rare for quartics but possible
+    }

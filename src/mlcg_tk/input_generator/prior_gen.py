@@ -331,7 +331,7 @@ class NonBonded(PriorBuilder):
         if prior_cls == Repulsion:
             prior_fit_fn = partial(prior_fit_fn, percentile=percentile, cutoff=cutoff)
         elif prior_cls == ExpRepulsion:
-            prior_fit_fn = partial(prior_fit_fn)
+            prior_fit_fn = partial(prior_fit_fn, cutoff=cutoff)
         else:
             raise ValueError(f"prior_cls must be either Repulsion or ExpRepulsion, got {prior_cls}")
         super().__init__(
