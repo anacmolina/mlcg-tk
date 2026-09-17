@@ -108,13 +108,23 @@ def process_raw_dataset(
             skip_residues=skip_residues,
         )
 
-        aa_coords, aa_forces = sample_loader.load_coords_forces(
-            raw_data_dir,
-            samples.mol_name,
-            stride=stride,
-            batch=samples.batch,
-            n_batches=samples.n_batches,
-        )
+        if "topology" in sample_loader.load_coords_forces.__code__.co_varnames:
+            aa_coords, aa_forces = sample_loader.load_coords_forces(
+                raw_data_dir,
+                samples.mol_name,
+                topology=pdb_template_fn,
+                stride=stride,
+                batch=samples.batch,
+                n_batches=samples.n_batches,
+            )
+        else:
+            aa_coords, aa_forces = sample_loader.load_coords_forces(
+                raw_data_dir,
+                samples.mol_name,
+                stride=stride,
+                batch=samples.batch,
+                n_batches=samples.n_batches,
+            )
 
         if samples.n_batches > 1 and samples.batch > 1:
             # this ensures that we are using the same force map across batches

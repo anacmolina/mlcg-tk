@@ -1587,7 +1587,12 @@ class CATH2_loader(DatasetLoader):
         return aa_traj, top_dataframe
 
     def load_coords_forces(
-        self, base_dir: str, name: str, topology: Union[md.Topology, md.Trajectory, str], stride: int = 1
+        self, base_dir: str, 
+        name: str, 
+        topology: str,
+        stride: int = 1,
+        batch: Optional[int] = None,
+        n_batches: Optional[int] = 1,
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         For a given CATH domain name, returns np.ndarray's of its coordinates and forces at
@@ -1604,13 +1609,17 @@ class CATH2_loader(DatasetLoader):
         stride : int
             Interval by which to stride loaded data
         """
+        if n_batches > 1:
+            raise NotImplementedError(
+                "mol_num_batches can only be used for single-protein datasets for now"
+                )
+
+        print(f"Input topology: {topology}")
+        topology = topology.replace("{0}", name)
+        print(f"Output topology: {topology}")
 
         if isinstance(topology, str):
             top = md.load(topology).topology
-        elif isinstance(topology, md.Trajectory):
-            top = topology.topology
-        elif isinstance(topology, md.Topology):
-            top = topology
         else:
             raise ValueError(f"Supplied topology is of the type {type(topology)} which is not supported. Please provide one of: md.Topology, md.Trajectory, path_to_topology")
 
