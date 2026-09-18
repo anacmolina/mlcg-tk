@@ -9,7 +9,7 @@ import warnings
 from pathlib import Path
 from tqdm import tqdm
 from .utils import chunker
-
+import warnings
 
 class DatasetLoader:
     r"""
@@ -1614,9 +1614,7 @@ class CATH2_loader(DatasetLoader):
                 "mol_num_batches can only be used for single-protein datasets for now"
                 )
 
-        print(f"Input topology: {topology}")
         topology = topology.replace("{0}", name)
-        print(f"Output topology: {topology}")
 
         if isinstance(topology, str):
             top = md.load(topology).topology
@@ -1625,22 +1623,26 @@ class CATH2_loader(DatasetLoader):
 
         coords_fns = sorted(glob(os.path.join(base_dir, f"cath2_{name}/trajs/run*_protein.xtc")))
 
-        aa_coords_list = []
-        aa_forces_list = []
+        if len(coords_fns) == 0:
+            raise warnings.warn(f"No coordinate files found for {name} in {base_dir}")
+            return None, None
+        else:
+            aa_coords_list = []
+            aa_forces_list = []
 
-        for c_fn in coords_fns:
-            f_fn = c_fn[:-11]+"forces.xtc"
-            try:
-                coords = md.load_xtc(c_fn, top).xyz
-                forces = md.load_xtc(f_fn, top).xyz
-                assert coords.shape == forces.shape
-            except Exception as e:
-                print(e)
-                continue
-            coords = 10.0 * coords  # convert nm to angstroms
-            forces = forces / 41.84  # convert to from kJ/mol/nm to kcal/mol/ang
-            aa_coords_list.append(coords)
-            aa_forces_list.append(forces)
-        aa_coords = np.concatenate(aa_coords_list)[::stride]
-        aa_forces = np.concatenate(aa_forces_list)[::stride]
-        return aa_coords, aa_forces
+            for c_fn in coords_fns:
+                f_fn = c_fn[:-11]+"forces.xtc"
+                try:
+                    coords = md.load_xtc(c_fn, top).xyz
+                    forces = md.load_xtc(f_fn, top).xyz
+                    assert coords.shape == forces.shape
+                except Exception as e:
+                    print(e)
+                    continue
+                coords = 10.0 * coords  # convert nm to angstroms
+                forces = forces / 41.84  # convert to from kJ/mol/nm to kcal/mol/ang
+                aa_coords_list.append(coords)
+                aa_forces_list.append(forces)
+            aa_coords = np.concatenate(aa_coords_list)[::stride]
+            aa_forces = np.concatenate(aa_forces_list)[::stride]
+            return aa_coords, aa_forces

@@ -126,6 +126,10 @@ def process_raw_dataset(
                 n_batches=samples.n_batches,
             )
 
+        if aa_coords is None or aa_forces is None:
+            print(f"Skipping {samples.mol_name} due to missing data.")
+            continue
+
         if samples.n_batches > 1 and samples.batch > 1:
             # this ensures that we are using the same force map across batches
             mapping = samples.load_cg_force_map(save_dir)
