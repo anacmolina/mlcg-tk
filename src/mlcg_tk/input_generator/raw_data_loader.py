@@ -1624,7 +1624,7 @@ class CATH2_loader(DatasetLoader):
         coords_fns = sorted(glob(os.path.join(base_dir, f"cath2_{name}/trajs/run*_protein.xtc")))
 
         if len(coords_fns) == 0:
-            raise warnings.warn(f"No coordinate files found for {name} in {base_dir}")
+            print(f"No coordinate files found for {name} in {base_dir}")
             return None, None
         else:
             aa_coords_list = []
