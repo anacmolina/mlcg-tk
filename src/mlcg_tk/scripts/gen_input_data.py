@@ -101,6 +101,10 @@ def process_raw_dataset(
             samples.mol_name, pdb_template_fn
         )
 
+        if samples.input_traj is None or samples.top_dataframe is None:
+            print(f"Skipping {samples.mol_name} due to missing data.")
+            continue
+
         samples.apply_cg_mapping(
             cg_atoms=cg_atoms,
             embedding_function=embedding_func,

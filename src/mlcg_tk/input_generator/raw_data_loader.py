@@ -662,7 +662,7 @@ class Villin_loader(DatasetLoader):
         n_batches: int
             if greater than 1, divide the total trajectories to load into n_batches chunks
         """
-
+    
         pdb_top = md.load_pdb(os.path.join(base_dir, f"topology.pdb"))
         coords_fns = sorted(
             glob(os.path.join(base_dir, f"coords_nowater/villin*_coor*.xtc"))
@@ -1578,6 +1578,9 @@ class CATH2_loader(DatasetLoader):
         pdb_fn:
             Path to pdb structure file
         """
+        if os.path.isfile(pdb_fn.format(name)) != True:
+            print("Topology file not found")
+            return None, None
 
         pdb = md.load(pdb_fn.format(name))
         aa_traj = pdb.atom_slice(
@@ -1613,8 +1616,12 @@ class CATH2_loader(DatasetLoader):
             raise NotImplementedError(
                 "mol_num_batches can only be used for single-protein datasets for now"
                 )
+        
+        topology = topology.format(name)
 
-        topology = topology.replace("{0}", name)
+        if os.path.isfile(topology) != True:
+            print("Topology file not found")
+            return None, None
 
         if isinstance(topology, str):
             top = md.load(topology).topology
