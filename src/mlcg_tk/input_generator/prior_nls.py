@@ -214,15 +214,22 @@ class Non_Bonded:
         # Minimum graph distance
         np.logical_and(mask, dists >= min_pair - 1, out=mask)
 
+        # Not among angle edges
+        if angle_edges is not None and len(angle_edges) != 0:
+            angle_edges_mask = np.zeros_like(mask)
+            angle_edges_mask[angle_edges[0], angle_edges[2]] = True
+            np.logical_and(mask, ~angle_edges_mask, out=mask)
+
         # Not among bond edges
         bond_edges_mask = np.zeros_like(mask)
         bond_edges_mask[bond_edges[0], bond_edges[1]] = True
         np.logical_and(mask, ~bond_edges_mask, out=mask)
 
-        # Not among angle edges
-        angle_edges_mask = np.zeros_like(mask)
-        angle_edges_mask[angle_edges[0], angle_edges[2]] = True
-        np.logical_and(mask, ~angle_edges_mask, out=mask)
+        # TODO: Check this MODIFICATION error when there are no angles
+        ## Not among angle edges
+        #angle_edges_mask = np.zeros_like(mask)
+        #angle_edges_mask[angle_edges[0], angle_edges[2]] = True
+        #np.logical_and(mask, ~angle_edges_mask, out=mask)
 
         # From boolean mask to nonzero indices
         edges_to_consider = torch.from_numpy(np.array(np.nonzero(mask)))
